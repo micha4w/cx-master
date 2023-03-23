@@ -1,0 +1,10 @@
+[package]
+name = "cx-lsp-clang-controller"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+jsonrpc = "0.14.0"
+websocket = "0.26.5"

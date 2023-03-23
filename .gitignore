@@ -1,0 +1,11 @@
+/native-host/target
+
+/extension/bin
+/extension/dist
+/extension/node_modules
+/extension/web-ext-artifacts
+/extension/*.log
+/extension/.parcel-cache
+/extension/.yarn
+
+/.vscode
