@@ -16,6 +16,9 @@
     "permissions": [
         "nativeMessaging"
     ],
+    "web_accessible_resources": [
+        "src/accesible/main.ts"
+    ],
     "content_scripts": [
         {
             "js": [

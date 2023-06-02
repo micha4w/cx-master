@@ -17,14 +17,15 @@
     "@parcel/core": "^2.8.3",
     "@types/firefox-webext-browser": "^111.0.0",
     "@types/ws": "^8.5.4",
+    "ace-code": "^1.22.0",
+    "ace-linters": "^0.10.3",
     "parcel": "^2.8.3",
+    "punycode": "^1.4.1",
+    "querystring-es3": "^0.2.1",
     "source-map-loader": "^4.0.1",
     "ts-loader": "^9.4.2",
     "typescript": "^4.9.5",
-    "web-ext": "^7.5.0"
-  },
-  "dependencies": {
-    "ace-code": "^1.15.3",
-    "ace-linters": "^0.6.0"
+    "url": "^0.11.0",
+    "web-ext": "^7.6.2"
   }
 }

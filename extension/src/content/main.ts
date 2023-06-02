@@ -1,38 +1,16 @@
-import * as ace from "ace-code";
-import { AceLanguageClient } from "ace-linters/build/ace-language-client";
+import script from 'url:../accesible/main.ts';
 
-
-function main() {
-    let editor = ace.edit("ace-editor");
-    console.log("Editor", editor);arguments
-
-    const ws = new WebSocket("ws://localhost:8080");
-    let languageProvider = AceLanguageClient.for(ws);
-    languageProvider.registerEditor(editor);
-}
-
-
-function waitForElm() {
-    return new Promise<void>(resolve => {
-        const editorExists = () => document.getElementsByClassName('ace_editor').length > 0;
-
-        if (editorExists()) {
-            resolve();
-            return;
+function reinjectScript(src) {
+    const scripts = document.getElementsByTagName('script');
+    for (let i = 0; i < scripts.length; i++) {
+        const script = scripts[i];
+        if (script.src == src) {
+            script.remove();
         }
-
-        const observer = new MutationObserver(_ => {
-            if (editorExists()) {
-                resolve();
-                observer.disconnect();
-            }
-        });
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    });
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    document.head.appendChild(script);
 }
 
-waitForElm().then(main);
+reinjectScript(script);
