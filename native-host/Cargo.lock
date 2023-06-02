@@ -150,6 +150,7 @@ name = "cx-lsp-clang-controller"
 version = "0.1.0"
 dependencies = [
  "jsonrpc",
+ "serde_json",
  "websocket",
 ]
 
