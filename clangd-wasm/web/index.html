@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en"n>
+
+<head>
+    <meta charset="UTF-8">
+
+    <script>
+        const worker = new Worker('test-em.js');
+        console.info('ifo');
+        worker.onmessage = console.info;
+
+        function submit() {
+            worker.postMessage(document.getElementById('stdin').value);
+        }
+    </script>
+    <!-- <script src="test-em.js"></script> -->
+</head>
+
+<body>
+    <textarea id="stdin"></textarea>
+    <button onclick="submit()">Send!</button>
+    <p id="stdout"></p>
+</body>
+
+</html>
