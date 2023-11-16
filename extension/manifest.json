@@ -29,5 +29,10 @@
             ],
             "run_at": "document_end"
         }
-    ]
+    ],
+    "browser_action": {
+        "default_icon": "res/cx-180.png",
+        "default_title": "CX Settings",
+        "default_popup": "res/popup.html"
+    }
 }

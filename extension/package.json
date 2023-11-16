@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "description": "",
   "scripts": {
-    "start": "web-ext run -s dist -u 'https://expert.ethz.ch/ide2/XQqxKCymuopJ8SuNG?fileKey=bRyeDpsqsP5Pmb7K6' -p /home/micha4w/.mozilla/firefox/ejt9wa6g.default-release",
+    "start": "web-ext run -s dist -u 'https://expert.ethz.ch/ide2/XQqxKCymuopJ8SuNG?fileKey=bRyeDpsqsP5Pmb7K6' -p '/home/micha4w/.mozilla/firefox/m41vdnzq.micha4w' --devtools",
     "release": "npm run build-release && npm run pack",
     "build": "rm -rf dist && parcel build manifest.json --config @parcel/config-webextension",
-    "watch": "rm -rf dist && parcel watch manifest.json --config @parcel/config-webextension",
+    "watch": "rm -rf dist && parcel watch manifest.json --no-hmr --config @parcel/config-webextension",
     "pack": "web-ext build -i src test coverage *.json \"*.js\" \"dist/*.map\" -i !manifest.json",
-    "lint": "tslint -p ."
+    "lint": "tslint -p .",
+    "clean": "rm -rf dist/"
   },
   "author": "",
   "license": "MIT",
@@ -18,14 +19,17 @@
     "@types/firefox-webext-browser": "^111.0.0",
     "@types/ws": "^8.5.4",
     "ace-code": "^1.22.0",
-    "ace-linters": "^0.10.3",
+    "ace-linters": "^0.13.2",
     "parcel": "^2.8.3",
-    "punycode": "^1.4.1",
+    "punycode": "^2.3.0",
     "querystring-es3": "^0.2.1",
     "source-map-loader": "^4.0.1",
     "ts-loader": "^9.4.2",
-    "typescript": "^4.9.5",
+    "typescript": "^5.2.2",
     "url": "^0.11.0",
     "web-ext": "^7.6.2"
+  },
+  "dependencies": {
+    "vscode-languageserver-protocol": "^3.17.4"
   }
 }
