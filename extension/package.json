@@ -1,35 +1,38 @@
 {
-  "name": "m4w-test",
-  "version": "0.1.0",
-  "description": "",
+  "name": "cx-master",
+  "version": "1.0.0",
+  "displayName": "Code-Expert Master",
+  "author": "micha4w",
+  "description": "A @samrum/vite-plugin-web-extension web extension",
   "scripts": {
-    "start": "web-ext run -s dist -u 'https://expert.ethz.ch/ide2/XQqxKCymuopJ8SuNG?fileKey=bRyeDpsqsP5Pmb7K6' -p '/home/micha4w/.mozilla/firefox/m41vdnzq.micha4w' --devtools",
-    "release": "npm run build-release && npm run pack",
-    "build": "rm -rf dist && parcel build manifest.json --config @parcel/config-webextension",
-    "watch": "rm -rf dist && parcel watch manifest.json --no-hmr --config @parcel/config-webextension",
-    "pack": "web-ext build -i src test coverage *.json \"*.js\" \"dist/*.map\" -i !manifest.json",
-    "lint": "tslint -p .",
-    "clean": "rm -rf dist/"
+    "build": "vite build",
+    "watch": "vite build --watch --mode development --minify false",
+    "dev": "vite",
+    "serve:firefox": "web-ext run -s dist -u 'https://expert.ethz.ch/ide2/XQqxKCymuopJ8SuNG?fileKey=bRyeDpsqsP5Pmb7K6' -p '/home/micha4w/.mozilla/firefox/m41vdnzq.micha4w' --devtools",
+    "serve:chrome": "web-ext run -t chromium --start-url \"https://example.com\" --source-dir ./dist/",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
   },
-  "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@parcel/config-webextension": "^2.8.3",
-    "@parcel/core": "^2.8.3",
-    "@types/firefox-webext-browser": "^111.0.0",
-    "@types/ws": "^8.5.4",
-    "ace-code": "^1.22.0",
-    "ace-linters": "^0.13.2",
-    "parcel": "^2.8.3",
-    "punycode": "^2.3.0",
-    "querystring-es3": "^0.2.1",
-    "source-map-loader": "^4.0.1",
-    "ts-loader": "^9.4.2",
-    "typescript": "^5.2.2",
-    "url": "^0.11.0",
-    "web-ext": "^7.6.2"
+    "@samrum/vite-plugin-web-extension": "^5.0.0",
+    "@sveltejs/vite-plugin-svelte": "^2.1.1",
+    "@tsconfig/svelte": "^4.0.1",
+    "@types/ace": "^0.0.51",
+    "@types/chrome": "^0.0.228",
+    "@types/webextension-polyfill": "^0.10.0",
+    "@types/xterm": "^3.0.0",
+    "ace-builds": "^1.22.0",
+    "svelte": "^3.58.0",
+    "svelte-check": "^3.2.0",
+    "svelte-preprocess": "^5.0.3",
+    "tslib": "^2.5.0",
+    "typescript": "^5.0.4",
+    "vite": "~4.3.3",
+    "web-ext": "^7.6.2",
+    "xterm": "^5.3.0"
   },
   "dependencies": {
-    "vscode-languageserver-protocol": "^3.17.4"
-  }
+    "webextension-polyfill": "^0.10.0"
+  },
+  "type": "module"
 }

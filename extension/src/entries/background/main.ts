@@ -1,3 +1,6 @@
+import browser from "webextension-polyfill";
+
+browser.runtime.onMessage.addListener(console.log)
 
 browser.runtime.onConnect.addListener(content => {
     const clangd = browser.runtime.connectNative('cx_lsp');
