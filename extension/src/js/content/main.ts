@@ -1,6 +1,6 @@
 import browser from "webextension-polyfill";
 
-import script from '../accesible/main.ts?worker&url';
+import script from '../injected/main.ts?worker&url'; // Worker so the code gets transpiled
 import { applyDefaultSettings } from "~/lib/Settings";
 
 function reinjectScript(src: string) {
@@ -27,9 +27,17 @@ window.addEventListener('message', event => {
 
 background.onMessage.addListener(data => window.postMessage(data, "*"));
 
+let first = true;
 document.addEventListener(
     "cxAceMounted",
     async () => {
+        if (!first) {
+            let settings = (await browser.storage.sync.get('settings'))['settings'];
+            window.postMessage({ type: 'cxm-reload', settings });
+            return;
+        }
+        first = false;
+
         const scriptReady = new Promise<void>(res => {
             function resolver(event : MessageEvent) {
                 if (event.source === window && event.data?.type === 'cxm-ready') {
@@ -42,8 +50,7 @@ document.addEventListener(
         });
         reinjectScript(browser.runtime.getURL(script));
 
-        let settings = (await browser.storage.sync.get('settings'))['settings'];
-        settings = applyDefaultSettings(settings);
+        let settings = applyDefaultSettings((await browser.storage.sync.get('settings'))['settings']);
 
         await browser.storage.sync.set({ 'settings': settings });
         await scriptReady;
@@ -59,7 +66,5 @@ document.addEventListener(
             }
         })
     },
-    // TODO capture more than once, but unload before callin onLoad again
-    // cxAceMounted gets again if you select a folder and then a file again
-    { capture: true, once: true }
+    { capture: true }
 );

@@ -1,13 +1,13 @@
 import pkg from "../package.json";
 
 const manifest = {
-  background: {
-    scripts: ["src/entries/background/main.ts"],
-    persistent: true,
-  },
+  // background: {
+  //   scripts: ["src/js/background/main.ts"],
+  //   persistent: true,
+  // },
   content_scripts: [
     {
-      js: ["src/entries/contentScript/main.ts"],
+      js: ["src/js/content/main.ts"],
       matches: ["https://expert.ethz.ch/ide2/*"],
       run_at: "document_end",
     },
@@ -16,7 +16,7 @@ const manifest = {
     default_icon: {
       64: "icons/64.png",
     },
-    default_popup: "src/entries/popup/index.html",
+    default_popup: "src/ui/popup/index.html",
   },
   icons: {
     64: "icons/64.png",

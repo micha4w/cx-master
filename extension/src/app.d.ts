@@ -7,6 +7,7 @@ declare global {
 	}
 
 	interface KeyboardShortcut {
+		short_description: string;
 		description: string;
 		value: string | undefined;
 		modifiers: KeyboardModifiers;

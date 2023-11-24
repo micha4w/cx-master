@@ -1,12 +1,12 @@
 <script lang="ts">
-    import Switch from "./Switch.svelte";
-    import Loader from "./Loader.svelte";
-    import ShortcutInput from "./ShortcutInput.svelte";
+    import Switch from "~/ui/components/Switch.svelte";
+    import Loader from "~/ui/components/Loader.svelte";
+    import ShortcutInput from "~/ui/components/ShortcutInput.svelte";
     import logo from "~/assets/logo-inverted.svg";
-    import { applyDefaultSettings, getKeyBindingins } from "./Settings";
+    import { applyDefaultSettings, getKeyBindingins } from "~/lib/Settings";
     import browser from "webextension-polyfill";
 
-    let settings : Settings;
+    let settings: Settings;
     $: {
         browser.storage.sync.set({ settings });
         // browser.runtime.sendMessage(JSON.stringify(settings));
@@ -15,7 +15,6 @@
         const vals = await browser.storage.sync.get("settings");
         settings = applyDefaultSettings(vals.settings);
     })();
-
 
     const keybinds = getKeyBindingins();
 </script>
@@ -67,13 +66,20 @@
         <h3>Shortcuts</h3>
         {#each Object.keys(settings.shortcuts) as id}
             <div class="shortcut">
-                <span>{settings.shortcuts[id].description}</span>
-                <span class="shortcut-input">
+                <div
+                    class="shortcut-label"
+                    title="{settings.shortcuts[id]
+                        .short_description}:&#10;&#13;{settings.shortcuts[id]
+                        .description}"
+                >
+                    {settings.shortcuts[id].short_description}
+                </div>
+                <div>
                     <ShortcutInput
                         bind:value={settings.shortcuts[id].value}
                         bind:modifiers={settings.shortcuts[id].modifiers}
                     />
-                </span>
+                </div>
             </div>
         {/each}
     </div>
@@ -160,10 +166,14 @@
 
     .shortcut {
         margin-bottom: 0.8em;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5em;
     }
 
-    .shortcut-input {
-        margin-left: 2em;
-        float: right;
+    .shortcut-label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 </style>

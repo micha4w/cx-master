@@ -2,6 +2,7 @@ import { parseKeyEvent } from "~/lib/KeyboardModifiers";
 
 export class ShortcutsHandler implements ISettingsHandler {
     settings: Settings;
+    listener = this.handleKeyDown.bind(this);
 
     onLoad(settings: Settings) {
         this.settings = settings;
@@ -18,7 +19,7 @@ export class ShortcutsHandler implements ISettingsHandler {
         `;
         document.head.append(style);
 
-        document.body.addEventListener('keydown', this.handleKeyDown.bind(this), true);
+        document.body.addEventListener('keydown', this.listener, true);
     }
 
     onUpdate(settings: Settings) {
@@ -26,8 +27,7 @@ export class ShortcutsHandler implements ISettingsHandler {
     }
 
     onUnload() {
-        // TODO 
-        // document.body.removeEventListener('keydown', this.handleKeyDown.bind(this));
+        document.body.removeEventListener('keydown', this.listener);
     }
 
 
@@ -63,34 +63,34 @@ export class ShortcutsHandler implements ISettingsHandler {
     }
 
 
-    static shortcutRunners = {
+    static runners = {
         focusleft: () => {
             switch (this.getFocused()) {
                 case 'editor':
                 case 'terminal':
-                    this.shortcutRunners.focusfiletree();
+                    this.runners.focusfiletree();
                     break;
                 case 'task':
-                    this.shortcutRunners.focuseditor();
+                    this.runners.focuseditor();
                     break;
             }
         },
         focusright: () => {
             switch (this.getFocused()) {
                 case 'filetree':
-                    this.shortcutRunners.focuseditor();
+                    this.runners.focuseditor();
                     break;
                 case 'editor':
                 case 'terminal':
-                    this.shortcutRunners.focustask();
+                    this.runners.focustask();
                     break;
             }
         },
         focusup: () => {
-            this.shortcutRunners.focuseditor();
+            this.runners.focuseditor();
         },
         focusdown: () => {
-            this.shortcutRunners.focusterminal();
+            this.runners.focusterminal();
         },
         focusfiletree: () => {
             const tree = document.querySelector('[data-test=project-tree-panel]') as HTMLElement;
@@ -153,7 +153,7 @@ export class ShortcutsHandler implements ISettingsHandler {
 
         if (ids.length > 0) {
             for (const id of ids) {
-                ShortcutsHandler.shortcutRunners[id]();
+                ShortcutsHandler.runners[id]();
             }
 
             e.stopPropagation();

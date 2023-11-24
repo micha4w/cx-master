@@ -1,3 +1,9 @@
+import 'ace-builds/src-min-noconflict/keybinding-vim';
+import 'ace-builds/src-min-noconflict/keybinding-emacs';
+import 'ace-builds/src-min-noconflict/keybinding-vscode';
+import 'ace-builds/src-min-noconflict/keybinding-sublime';
+
+
 export class KeybindsHandler implements ISettingsHandler {
     onLoad(settings: Settings) {
         this.onUpdate(settings)
@@ -5,6 +11,7 @@ export class KeybindsHandler implements ISettingsHandler {
 
     onUpdate(settings: Settings) {
         const editor = ace.edit('ace-editor');
+
         switch (settings.keybind) {
             case 'default':
                 editor.setKeyboardHandler('');

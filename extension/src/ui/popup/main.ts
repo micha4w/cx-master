@@ -1,4 +1,4 @@
-import Popup from "../../lib/Popup.svelte";
+import Popup from "./Popup.svelte";
 
 new Popup({
   target: document.getElementById("popup"),
