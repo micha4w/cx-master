@@ -1,7 +1,13 @@
-# cx-lsp
+# cx-master
+This extension adds cool stuff like a nice switch between Vim, VSCode and Ace keybindings.
+
+Sadly, it will probalby not be possible to put this on addons.mozilla.org, because they need access to CodeExpert to validate the extension.
+
+
+## [WIP] cx-lsp
 This extension adds the clangd lsp to CodeExperts Ace Editor using a locally ran WebSocket.
 
-## Native application
+### Native application
 
 Create `~/.mozilla/native-messaging-hosts/cx_lsp.json` with following content
 ```json
@@ -14,7 +20,7 @@ Create `~/.mozilla/native-messaging-hosts/cx_lsp.json` with following content
 }
 ```
 
-## Building clangd to WASM
+### Building clangd to WASM
 Need emsdk installed
 ```sh
 wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-16.0.6.tar.gz
@@ -32,6 +38,10 @@ docker run \
     cmake --build build-host --target clang-tblgen llvm-tblgen clang-tidy-confusable-chars-gen -j $THREADS
 
     CXXFLAGS='-Dwait4=__syscall_wait4' \
+    LDFLAGS='-sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE=\$stringToNewUTF8 \
+             -sASYNCIFY -pthread -sPROXY_TO_PTHREAD -sEXIT_RUNTIME=1 \
+             -Wl,--wrap=fgets,--wrap=fread \
+             --pre-js web/settings.js' \
     emcmake cmake -S llvm -B build -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS='clang;clang-tools-extra' -Wno-dev \
         -DLLVM_TABLEGEN=/src/build-host/bin/llvm-tblgen \
         -DCLANG_TABLEGEN=/src/build-host/bin/clang-tblgen \
@@ -47,5 +57,5 @@ em++ src/test.cpp -o web/test-em.js \
 clang++ src/test.cpp -o test
 ```
 
-## CORS
+### CORS
 For now you need to remove the Content-Security-Policy Response Header when running the lsp
