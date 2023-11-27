@@ -43,7 +43,8 @@ export function getManifest(): chrome.runtime.ManifestV2 {
     browser_specific_settings: {
       gecko: {
         id: pkg.name + '@micha4w.ch',
-        strict_min_version: "42.0"
+        strict_min_version: "57.0",
+        update_url: "https://raw.githubusercontent.com/micha4w/cx-master/main/extension/updates-firefox.json"
       }
     },
     ...manifest,
