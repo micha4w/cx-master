@@ -3,6 +3,17 @@ This extension adds cool stuff like a nice switch between Vim, VSCode and Ace ke
 
 Sadly, it will probalby not be possible to put this on addons.mozilla.org, because they need access to CodeExpert to validate the extension.
 
+## Extension
+All the web Extension code is currently inside the `extension/` directory.
+
+### Building
+Requires npm
+```sh
+cd extension
+npm run package
+```
+The generated Code will be in `dist/` and the packaged Zip will be in `out/`.
+
 
 ## [WIP] cx-lsp
 This extension adds the clangd lsp to CodeExperts Ace Editor using a locally ran WebSocket.
