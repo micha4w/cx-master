@@ -1,7 +1,8 @@
 # cx-master
 This extension adds cool stuff like a nice switch between Vim, VSCode and Ace keybindings.
 
-Sadly, it will probalby not be possible to put this on addons.mozilla.org, because they need access to CodeExpert to validate the extension.
+![settings](res/settings.png)
+
 
 ## Extension
 All the web Extension code is currently inside the `extension/` directory.
