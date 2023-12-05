@@ -2,7 +2,7 @@
     import Switch from "~/ui/components/Switch.svelte";
     import Loader from "~/ui/components/Loader.svelte";
     import ShortcutInput from "~/ui/components/ShortcutInput.svelte";
-    import logo from "~/assets/logo-inverted.svg";
+    import logo from "~/assets/cxm-logo.svg";
     import { applyDefaultSettings, getKeyBindingins } from "~/lib/Settings";
     import browser from "webextension-polyfill";
 
