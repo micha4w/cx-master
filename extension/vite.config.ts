@@ -13,6 +13,10 @@ export default defineConfig(() => {
         manifest: getManifest(),
       }),
     ],
+    worker: {
+      // To allow for dynamic importing in your injected.ts?url&worker
+      format: 'es'
+    },
     resolve: {
       alias: {
         "~": path.resolve(__dirname, "./src"),

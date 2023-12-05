@@ -3,23 +3,25 @@ export function applyDefaultSettings(settings : Settings) : Settings {
         keybind: "default",
         vimrc: "",
         options: {
-            // TODO
+            // TODO lsp
             // enable_lsp: {
             //     description: "Enable ClangD LSP",
             //     value: false,
             // },
-            // Cant detect autosave, might lead to a cycle of autosaving and formatting
-            // format_on_save: {
-            //     description: "Format current file on save",
-            //     value: false,
-            // },
-            // Probably can't get xterm instance 
-            // goto_file: {
-            //     description: "Click link to go to file",
-            //     value: false,
-            // },
+            goto_file: {
+                description: "Click link to go to file",
+                value: true,
+            },
             fix_xterm_scrollbar: {
                 description: "Fix scrollbar in Firefox",
+                value: true,
+            },
+            parse_errors: {
+                description: "Parse and Display Errors",
+                value: true,
+            },
+            navigable_filetree: {
+                description: "Makes FileTree Keyboard Navigable",
                 value: true,
             }
         },

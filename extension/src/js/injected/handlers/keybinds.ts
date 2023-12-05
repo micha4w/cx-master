@@ -1,44 +1,46 @@
-import 'ace-builds/src-min-noconflict/keybinding-vim';
-import 'ace-builds/src-min-noconflict/keybinding-emacs';
-import 'ace-builds/src-min-noconflict/keybinding-vscode';
-import 'ace-builds/src-min-noconflict/keybinding-sublime';
-
+import { cx_data } from '~/lib/Utils';
 
 export class KeybindsHandler implements ISettingsHandler {
-    onLoad(settings: Settings) {
-        this.onUpdate(settings)
+    onLoadEditor() {
+        this.onUpdate({ keybind: 'default' } as Settings);
     }
 
-    onUpdate(settings: Settings) {
-        const editor = ace.edit('ace-editor');
+    async onUpdate(oldSettings: Settings) {
+        if (!cx_data.editor || oldSettings.keybind === cx_data.settings.keybind)
+            return;
 
-        switch (settings.keybind) {
+        switch (cx_data.settings.keybind) {
             case 'default':
-                editor.setKeyboardHandler('');
+                cx_data.editor.setKeyboardHandler('');
                 break;
             case 'vim':
+                await import('ace-builds/src-min-noconflict/keybinding-vim');
                 const vim = ace.require('ace/keyboard/vim');
-                editor.setKeyboardHandler(vim.handler);
+                cx_data.editor.setKeyboardHandler(vim.handler);
                 // vim.Vim.defineEx('gmap','gm', (cm, params) => {
-                    // if (shortcutRunners[params.args[1]])
-                    //     maps.push([params.args[0], params.args[1]]);
+                // if (shortcutRunners[params.args[1]])
+                //     maps.push([params.args[0], params.args[1]]);
                 // });
-                for (const line of settings.vimrc.split('\n')) {
-                    if (line.split(' ')[0] === 'map') {
-                        // @ts-ignore
-                        vim.Vim.handleEx(editor.state.cm, line);
-                    }
+                for (const line of cx_data.settings.vimrc.split('\n')) {
+                    vim.Vim.handleEx((cx_data.editor as any).state.cm, line);
                 }
-                break; 
+                break;
             case 'emacs':
-                editor.setKeyboardHandler(ace.require('ace/keyboard/emacs').handler);
-                break; 
+                await import('ace-builds/src-min-noconflict/keybinding-emacs');
+                cx_data.editor.setKeyboardHandler(ace.require('ace/keyboard/emacs').handler);
+                break;
             case 'vscode':
-                editor.setKeyboardHandler(ace.require('ace/keyboard/vscode').handler);
-                break; 
+                await import('ace-builds/src-min-noconflict/keybinding-vscode');
+                cx_data.editor.setKeyboardHandler(ace.require('ace/keyboard/vscode').handler);
+                break;
             case 'sublime':
-                editor.setKeyboardHandler(ace.require('ace/keyboard/sublime').handler);
-                break; 
+                await import('ace-builds/src-min-noconflict/keybinding-sublime');
+                cx_data.editor.setKeyboardHandler(ace.require('ace/keyboard/sublime').handler);
+                break;
         }
+    }
+
+    onUnload() {
+        cx_data.editor?.setKeyboardHandler('');
     }
 }

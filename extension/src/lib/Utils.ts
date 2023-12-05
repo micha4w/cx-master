@@ -1,3 +1,26 @@
+import type { Terminal } from 'xterm';
+
+export var cx_data : {
+	settings : Settings;
+	editor : AceAjax.Editor;
+    terminal: Terminal;
+} = { settings: undefined, editor: undefined, terminal: undefined };
+
+
+export class CachedBind {
+    private cachedBinds = new Map<any, any>();
+
+    cachedBind<T extends Function>(method: T) {
+        let bind = this.cachedBinds.get(method);
+        if (bind === undefined) {
+            bind = method.bind(this);
+            this.cachedBinds.set(method, bind);
+        }
+        return bind;
+    }
+}
+
+
 export function waitForElm(pred: () => boolean) {
     document.getSelection
     return new Promise<void>(resolve => {
@@ -20,6 +43,13 @@ export function waitForElm(pred: () => boolean) {
     });
 }
 
+export function waitForTerminal() {
+    const terminal_wrapper = document.querySelector('button[title=Compile]').closest('[data-testid=split-view-view]');
+    const key = Object.keys(terminal_wrapper).find(key => key.startsWith('__reactFiber$'));
+    cx_data.terminal = terminal_wrapper[key].child.updateQueue.lastEffect.deps[0];
+
+}
+
 
 export function getAntTreePath(el: Element) {
     let path = el.textContent.trim();
@@ -36,7 +66,37 @@ export function getAntTreePath(el: Element) {
         }
     }
 
-    return '/' + path;
+    return path;
+}
+
+export function getCurrentFile() {
+    const el = document.querySelector('[data-test=project-tree-panel] .ant-tree-treenode-selected');
+    return getAntTreePath(el);
+}
+
+export function openFile(path: string) {
+    const tree = document.querySelector('[data-test=project-tree-panel] .ant-tree-list-holder-inner');
+    if (tree.children[0].classList.contains('ant-tree-treenode-switcher-close')) {
+        (tree.children[0].querySelector('.ant-tree-switcher') as HTMLElement).click();
+    }
+
+    const paths = path.split('/');
+    let current = 0;
+    for (let i = 1; i < tree.children.length; i++) {
+        const indent = tree.children[i].querySelector('.ant-tree-indent').children.length - 1;
+        if (indent < current) {
+            break;
+        }
+
+        if (indent == current && tree.children[i].textContent.trim() === paths[current]) {
+            current++;
+            if (current >= paths.length) {
+                (tree.children[i].querySelector('.ant-tree-node-content-wrapper') as HTMLElement).click();
+                return;
+            }
+        }
+    }
+    throw new Error(`File not found: ${path}`);
 }
 
 // export function getAntTree() {
@@ -61,26 +121,3 @@ export function getAntTreePath(el: Element) {
 
 //     return '/' + path;
 // }
-
-// https://stackoverflow.com/a/70267397
-export function listenToSockets(callback: (e: { data: string, socket: WebSocket, event: MessageEvent }) => void = console.log) {
-    let property = Object.getOwnPropertyDescriptor(MessageEvent.prototype, "data");
-
-    const data = property.get;
-
-    function lookAtMessage() {
-        let socket = this.currentTarget instanceof WebSocket;
-        if (!socket)
-            return data.call(this);
-
-        let msg = data.call(this);
-
-        Object.defineProperty(this, "data", { value: msg });
-        callback({ data: msg, socket: this.currentTarget, event: this });
-        return msg;
-    }
-
-    property.get = lookAtMessage;
-
-    Object.defineProperty(MessageEvent.prototype, "data", property);
-}

@@ -1,6 +1,9 @@
 import type { KeyboardModifiers } from "$lib/KeyboardModifiers";
 
 declare global {
+	var Meteor : any;
+
+	
 	interface Option {
 		description: string;
 		value: boolean;
@@ -22,15 +25,11 @@ declare global {
 	}
 
 	interface ISettingsHandler {
-		onLoad?(settings : Settings);
-		onUpdate?(settings : Settings);
+		onLoad?();
+		onLoadEditor?();
+		onUpdate?(oldSettings : Settings);
 		onUnload?();
 	}
 }
-
-// import type Ace from 'ace-builds/ace.d.ts'
-// declare module 'ace-builds/src-min-noconflict/ace' {
-// 	ace: Ace;
-// };
 
 export { };

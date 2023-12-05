@@ -9,7 +9,7 @@ const manifest = {
     {
       js: ["src/js/content/main.ts"],
       matches: ["https://expert.ethz.ch/ide2/*"],
-      run_at: "document_end",
+      run_at: "document_idle",
     },
   ],
   browser_action: {
