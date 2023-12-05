@@ -1,14 +1,14 @@
 {
   "name": "cx-master",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Code-Expert Master",
   "author": "micha4w",
   "description": "A helper Addon to improve the Code-Expert experience",
   "scripts": {
     "build": "vite build",
     "watch": "vite build --watch --mode development --minify false",
-    "package": "npm run clean && npm run build && web-ext build -s dist -a out",
-    "clean": "rm -rf dist out",
+    "package": "npm run clean && npm run build && web-ext build -s dist -a out --overwrite-dest",
+    "clean": "rm -rf dist",
     "dev": "vite",
     "serve:firefox": "web-ext run -s dist -u 'https://expert.ethz.ch/ide2/XQqxKCymuopJ8SuNG?fileKey=bRyeDpsqsP5Pmb7K6' -p '/home/micha4w/.mozilla/firefox/m41vdnzq.micha4w'",
     "serve:chrome": "web-ext run -t chromium --start-url \"https://example.com\" --source-dir ./dist/",

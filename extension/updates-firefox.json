@@ -1,7 +1,15 @@
 {
   "addons": {
-    "{...}": {
+    "cx-master@micha4w.ch": {
       "updates": [
+        {
+          "version": "1.0.0",
+          "update_link": "https://github.com/micha4w/cx-master/releases/download/v1.0.0/cx-master-v1.0.0.xpi"
+        },
+        {
+          "version": "1.0.1",
+          "update_link": "https://github.com/micha4w/cx-master/releases/download/v1.0.1/cx-master-v1.0.1.xpi"
+        }
       ]
     }
   }
