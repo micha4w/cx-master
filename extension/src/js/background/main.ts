@@ -3,7 +3,7 @@ import browser from "webextension-polyfill";
 
 
 browser.tabs.onUpdated.addListener((tabid, info, tab) => {
-    browser.tabs.sendMessage(tabid, 'cxm-update-event');
+    browser.tabs.sendMessage(tabid, 'cxm-update-event').catch(() => {});
 });
 
 browser.runtime.onMessage.addListener(console.info);

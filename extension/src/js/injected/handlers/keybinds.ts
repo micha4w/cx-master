@@ -22,7 +22,8 @@ export class KeybindsHandler implements ISettingsHandler {
                 //     maps.push([params.args[0], params.args[1]]);
                 // });
                 for (const line of cx_data.settings.vimrc.split('\n')) {
-                    vim.Vim.handleEx((cx_data.editor as any).state.cm, line);
+                    if (line.trim() !== '')
+                        vim.Vim.handleEx((cx_data.editor as any).state.cm, line);
                 }
                 break;
             case 'emacs':

@@ -16,8 +16,8 @@ window.addEventListener('message', async function (event) {
     if (event.source !== window || !event.data)
         return;
 
-    if (event.data.type?.startsWith?.('cxm-'))
-        console.log(event)
+    // if (event.data.type?.startsWith?.('cxm-'))
+    //     console.log(event)
 
     const oldSettings = cx_data.settings;
     if (event.data.settings)

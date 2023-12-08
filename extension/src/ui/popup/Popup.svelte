@@ -54,8 +54,10 @@
         <h3>Options</h3>
         {#each Object.keys(settings.options) as id}
             <div class="option">
-                <span>{settings.options[id].description}</span>
-                <div class="option-input">
+                <span
+                    title="{settings.options[id].description}"
+                >{settings.options[id].description}</span>
+                <div>
                     <Switch bind:value={settings.options[id].value} />
                 </div>
             </div>
@@ -117,14 +119,6 @@
         border-bottom-width: 2px;
     }
 
-    .option {
-        margin-bottom: 0.6em;
-    }
-
-    .option-input {
-        float: right;
-    }
-
     .keybinds textarea {
         margin-top: 1em;
         width: 100%;
@@ -162,6 +156,19 @@
 
     .keybinds button.selected {
         background-color: var(--primary-color);
+    }
+
+    .option {
+        margin-bottom: 0.6em;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5em;
+    }
+
+    .option span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .shortcut {

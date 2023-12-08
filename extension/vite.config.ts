@@ -1,8 +1,8 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import webExtension from "@samrum/vite-plugin-web-extension";
 import path from "path";
-import { getManifest } from "./src/manifest";
+import { getManifestChrome, getManifestFirefox } from "./src/manifest";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -10,7 +10,7 @@ export default defineConfig(() => {
     plugins: [
       svelte(),
       webExtension({
-        manifest: getManifest(),
+        manifest: process.env.CX_BROWSER === 'chrome' ? getManifestChrome() : getManifestFirefox(),
       }),
     ],
     worker: {

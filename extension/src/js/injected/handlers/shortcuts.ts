@@ -153,13 +153,15 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
             if (!document.querySelector('.terminal.xterm'))
                 this.clickTab('Console');
 
-            (document.querySelector('button[title=Run]') as HTMLButtonElement).click();
+            ((document.querySelector('button[title=Run]') ??
+              document.querySelector('button[title=Stop]')) as HTMLButtonElement).click();
         },
         test: () => {
             if (!document.querySelector('.terminal.xterm'))
                 this.clickTab('Console');
 
-            (document.querySelector('button[title=Test]') as HTMLButtonElement).click();
+            ((document.querySelector('button[title=Test]') ??
+              document.querySelector('button[title=Stop]')) as HTMLButtonElement).click();
         },
         format: () => {
             if (!cx_data.editor)
