@@ -7,6 +7,27 @@ This extension adds cool stuff like a nice switch between Vim, VSCode and Ace ke
 ## Extension
 All the web Extension code is currently inside the `extension/` directory.
 
+### Installing
+> [!NOTE]
+> This extension won't be available on Browsers addon sites, because:
+> - `addons.mozilla.org`: Stupid verification proccess which I probably wont pass, because the testers can't test the addon without credentials. Plus I couldn't even get the addon far enough to get tested
+> - `chromewebstore.google.com`: You need to pay 5$ to submit addons, can't endorse that
+
+
+#### Firefox
+Go to [Releases](https://github.com/micha4w/cx-master/releases) page and download the latest `.xpi` file, it should install and update automagically.
+
+#### Chromium-Based Browsers
+    1. Go to [Releases](https://github.com/micha4w/cx-master/releases) page and download the latest `.zip`, then unpack it somewhere safe (If you delete the folder, the extension will uninstall)
+    2. Open [`chrome://extensions`](chrome://extensions) in your browser, flick the `Developer Mode` Switch (probably at the top right)
+    3. Click `Load unpacked` and choose the folder you just unpacked
+    4. Profit! *You can now undo Developer Mode if you want to*
+
+> [!NOTE]
+> Chromium won't automatically update the addon, because it wants my money,
+> so if you wan't to keep up to date, Watch this repo and reinstall the addon when new versions come out
+
+
 ### Building
 Requires npm
 ```sh
