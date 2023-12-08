@@ -52,11 +52,11 @@
 
     <div class="options">
         <h3>Options</h3>
-        {#each Object.keys(settings.options) as id}
+        {#each Object.keys(settings.options).sort((a, b) => settings.options[a].index - settings.options[b].index) as id}
             <div class="option">
-                <span
-                    title="{settings.options[id].description}"
-                >{settings.options[id].description}</span>
+                <span title={settings.options[id].description}
+                    >{settings.options[id].description}</span
+                >
                 <div>
                     <Switch bind:value={settings.options[id].value} />
                 </div>
@@ -66,7 +66,7 @@
 
     <div class="shortcuts">
         <h3>Shortcuts</h3>
-        {#each Object.keys(settings.shortcuts) as id}
+        {#each Object.keys(settings.shortcuts).sort((a, b) => settings.shortcuts[a].index - settings.shortcuts[b].index) as id}
             <div class="shortcut">
                 <div
                     class="shortcut-label"

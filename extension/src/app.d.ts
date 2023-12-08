@@ -5,11 +5,13 @@ declare global {
 
 	
 	interface Option {
+		index: number,
 		description: string;
 		value: boolean;
 	}
 
 	interface KeyboardShortcut {
+		index: number,
 		short_description: string;
 		description: string;
 		value: string | undefined;

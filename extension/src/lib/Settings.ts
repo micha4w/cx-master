@@ -9,103 +9,120 @@ export function applyDefaultSettings(settings : Settings) : Settings {
             //     value: false,
             // },
             goto_file: {
+                index: 0,
                 description: "Click link to go to file",
                 value: true,
             },
             fix_xterm_scrollbar: {
+                index: 1,
                 description: "Fix scrollbar in Firefox",
                 value: true,
             },
             parse_errors: {
+                index: 2,
                 description: "Parse and Display Errors",
                 value: true,
             },
             navigable_filetree: {
+                index: 3,
                 description: "Makes FileTree Keyboard Navigable",
                 value: true,
             }
         },
         shortcuts: {
             compile: {
+                index: 0,
                 short_description: "Compile",
                 description: "Focuses the Terminal and hits the Compile button",
                 value: undefined,
                 modifiers: 0,
             },
             run: {
+                index: 1,
                 short_description: "Run",
                 description: "Focuses the Terminal and hits the Run button",
                 value: undefined,
                 modifiers: 0,
             },
             test: {
+                index: 2,
                 short_description: "Run Tests",
                 description: "Focuses the Terminal and hits the Test button",
                 value: undefined,
                 modifiers: 0,
             },
             format: {
+                index: 3,
                 short_description: "Format File",
                 description: "Formats the currently open File using ACE's beautify extension",
                 value: undefined,
                 modifiers: 0,
             },
             line_comment: {
+                index: 4,
                 short_description: "Comment Selection",
                 description: "Toggles the Comments on the currently selected Lines",
                 value: undefined,
                 modifiers: 0,
             },
             focusleft: {
+                index: 5,
                 short_description: "Focus left",
                 description: "Focuses the Tab to the left of the current Tab",
                 value: undefined,
                 modifiers: 0,
             },
             focusright: {
+                index: 6,
                 short_description: "Focus right",
                 description: "Focuses the Tab to the right of the current Tab",
                 value: undefined,
                 modifiers: 0,
             },
             focusup: {
+                index: 7,
                 short_description: "Focus top",
                 description: "Focuses the Tab to the top of the current Tab",
                 value: undefined,
                 modifiers: 0,
             },
             focusdown: {
+                index: 8,
                 short_description: "Focus bottom",
                 description: "Focuses the Tab to the bottom of the current Tab",
                 value: undefined,
                 modifiers: 0,
             },
             focusfiletree: {
+                index: 9,
                 short_description: "Focus FileTree",
                 description: "Opens and Focuses the FileTree Tab, so you can use Arrows (or hjkl in Vim mode) to navigate the files",
                 value: undefined,
                 modifiers: 0,
             },
             focuseditor: {
+                index: 10,
                 short_description: "Focus Editor",
                 description: "Focuses the ACE Editor",
                 value: undefined,
                 modifiers: 0,
             },
             focusterminal: {
+                index: 11,
                 short_description: "Focus Terminal",
                 description: "Opens and Focuses the Terminal",
                 value: undefined,
                 modifiers: 0,
             },
             focustask: {
+                index: 12,
                 short_description: "Focus Task",
                 description: "Opens and Focuses the Tak or History Tab",
                 value: undefined,
                 modifiers: 0,
             },
         },
-    };
+    }
 
     if (!settings)
         return defaultSettings;

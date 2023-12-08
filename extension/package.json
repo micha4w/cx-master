@@ -1,14 +1,14 @@
 {
   "name": "cx-master",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "displayName": "Code-Expert Master",
   "author": "micha4w",
   "description": "A helper Addon to improve the Code-Expert experience",
   "scripts": {
     "build": "vite build",
     "watch": "vite build --watch --mode development --minify false",
-    "package:firefox": "npm run clean && env CX_BROWSER=firefox npm run build && web-ext build -s dist -a out --overwrite-dest",
-    "package:chrome": "npm run clean && env CX_BROWSER=chrome npm run build",
+    "package:firefox": "npm run clean && env CX_BROWSER=firefox npm run build && web-ext build -s dist -a out/firefox --overwrite-dest",
+    "package:chrome": "npm run clean && env CX_BROWSER=chrome npm run build && mkdir -p out/chrome && rm -f out/chrome/code-expert_master-$npm_package_version.zip && cd dist && zip -r ../out/chrome/code-expert_master-$npm_package_version.zip *",
     "clean": "rm -rf dist",
     "serve:firefox": "web-ext run -s dist -u 'https://expert.ethz.ch/ide2/XQqxKCymuopJ8SuNG?fileKey=bRyeDpsqsP5Pmb7K6' -p '/home/micha4w/.mozilla/firefox/m41vdnzq.micha4w'",
     "serve:chrome": "web-ext run -t chromium --start-url \"https://expert.ethz.ch/ide2/XQqxKCymuopJ8SuNG?fileKey=bRyeDpsqsP5Pmb7K6\" --source-dir ./dist/",
