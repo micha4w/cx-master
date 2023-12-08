@@ -1,7 +1,8 @@
+#include <iostream>
+#include <string>
+
 #include <memory.h>
 #include <emscripten.h>
-
-#include <string>
 
 
 EM_ASYNC_JS(char*, _await_response, (), {
@@ -37,12 +38,16 @@ extern "C" {
     if (stream != stdin)
       return __real_fgets(str, num, stream);
 
-    if (s_GotLength)
+    if (s_GotLength) {
+      s_GotLength = false;
+      std::cerr << std::endl;
       return strncpy(str, "\n", num);
+    }
 
     s_GotLength = true;
     s_Response = _await_response();
 
+    std::cerr << "Content-Length: " + std::to_string(strlen(s_Response)) << std::endl;
     return strncpy(str, ("Content-Length: " + std::to_string(strlen(s_Response)) + '\n').c_str(), num);
   }
 
@@ -52,8 +57,7 @@ extern "C" {
     if (stream != stdin)
       return __real_fread(str, size, num, stream);
 
-    s_GotLength = false;
-
+    std::cerr << s_Response << std::endl;
     memcpy(str, s_Response, num);
     free(s_Response);
     return num;
