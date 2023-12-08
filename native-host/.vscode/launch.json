@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Rust Attach",
+            "program": "${workspaceRoot}/target/debug/cx-lsp-clang-controller",
+            "type": "cppdbg",
+            "request": "attach",
+            "processId": "${command:pickProcess}",
+        }
+    ]
+}
