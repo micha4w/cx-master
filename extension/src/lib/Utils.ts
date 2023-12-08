@@ -1,9 +1,9 @@
 import type { Terminal } from 'xterm';
 
-export var cx_data : {
-	settings : Settings;
-	editor : AceAjax.Editor;
-    terminal: Terminal;
+export var cx_data: {
+    settings: Settings;
+    editor?: AceAjax.Editor;
+    terminal?: Terminal;
 } = { settings: undefined, editor: undefined, terminal: undefined };
 
 
@@ -28,14 +28,14 @@ export function waitForElm(pred: () => boolean) {
             resolve();
             return;
         }
- 
+
         const observer = new MutationObserver(record => {
             if (pred()) {
                 resolve();
                 observer.disconnect();
             }
         });
- 
+
         observer.observe(document.body, {
             childList: true,
             subtree: true
@@ -71,7 +71,7 @@ export function getAntTreePath(el: Element) {
 
 export function getCurrentFile() {
     const el = document.querySelector('[data-test=project-tree-panel] .ant-tree-treenode-selected');
-    return getAntTreePath(el);
+    if (el) return getAntTreePath(el);
 }
 
 export function openFile(path: string) {

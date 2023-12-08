@@ -1,14 +1,14 @@
 import pkg from "../package.json";
 
 const manifest = {
-  // background: {
-  //   scripts: ["src/js/background/main.ts"],
-  //   persistent: true,
-  // },
+  background: {
+    scripts: ["src/js/background/main.ts"],
+    // persistent: true,
+  },
   content_scripts: [
     {
       js: ["src/js/content/main.ts"],
-      matches: ["https://expert.ethz.ch/ide2/*"],
+      matches: ["https://expert.ethz.ch/*"],
       run_at: "document_idle",
     },
   ],

@@ -11,7 +11,7 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
     }
 
     onUnload() {
-        document.body.removeEventListener('keydown', this.cachedBind(this.handleKeyDown));
+        document.body.removeEventListener('keydown', this.cachedBind(this.handleKeyDown), true);
     }
 
     handleKeyDown(e: KeyboardEvent) {

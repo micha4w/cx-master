@@ -53,31 +53,11 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
             );
 
             handleOptionChange(
-                ['goto_file'],
-                () => this.linkProviderDisposer = cx_data.terminal.registerLinkProvider(new LinkProvider(
-                    cx_data.terminal,
-                    /(\/var\/lib\/cxrun\/projectfiles\/.*?:(?:\d+:){0,2})/,
-                    this.handleFileLinkClicked.bind(this),
-                )),
-                () => this.linkProviderDisposer.dispose(),
-            );
-
-            const meteorSocket: WebSocket = Meteor?.connection?._stream?.socket;
-            handleOptionChange(
-                ['parse_errors'],
-                () => meteorSocket?.addEventListener('message', this.cachedBind(this.handleMeteorResponse)),
-                () => {
-                    meteorSocket?.removeEventListener('message', this.cachedBind(this.handleMeteorResponse));
-                    this.compilerAnnotations.clear();
-                    cx_data.editor?.session.clearAnnotations();
-                    this.annotatedFiles.delete(getCurrentFile());
-                }
-            );
-
-            handleOptionChange(
                 ['navigable_filetree'],
                 () => {
                     const fileTree = document.querySelector('[data-test=project-tree-panel]') as HTMLElement;
+                    if (!fileTree) return;
+
                     fileTree.setAttribute('tabindex', '-1'); // Makes the file tree focusable
                     fileTree.addEventListener('blur', this.cachedBind(this.handleFileTreeBlur));
                     fileTree.addEventListener('keydown', this.cachedBind(this.handleFileTreeKeyDown));
@@ -92,26 +72,54 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
                 },
                 () => {
                     const fileTree = document.querySelector('[data-test=project-tree-panel]') as HTMLElement;
+                    if (!fileTree) return;
+
                     fileTree.removeAttribute('tabindex');
                     fileTree.removeEventListener('blur', this.cachedBind(this.handleFileTreeBlur));
                     fileTree.removeEventListener('keydown', this.cachedBind(this.handleFileTreeKeyDown));
                     document.head.querySelector('#cxm-filetree-style').remove();
                 },
             );
+
+            if (cx_data.terminal) {
+                handleOptionChange(
+                    ['goto_file'],
+                    () => this.linkProviderDisposer = cx_data.terminal.registerLinkProvider(new LinkProvider(
+                        cx_data.terminal,
+                        /(\/var\/lib\/cxrun\/projectfiles\/.*?:(?:\d+:){0,2})/,
+                        this.handleFileLinkClicked.bind(this),
+                    )),
+                    () => this.linkProviderDisposer.dispose(),
+                );
+
+                const meteorSocket: WebSocket = Meteor?.connection?._stream?.socket;
+                handleOptionChange(
+                    ['parse_errors'],
+                    () => meteorSocket?.addEventListener('message', this.cachedBind(this.handleMeteorResponse)),
+                    () => {
+                        meteorSocket?.removeEventListener('message', this.cachedBind(this.handleMeteorResponse));
+                        this.compilerAnnotations.clear();
+                        cx_data.editor?.session.clearAnnotations();
+                        this.annotatedFiles.delete(getCurrentFile());
+                    }
+                );
+            }
         }
 
         if (cx_data.editor) {
-            handleOptionChange(
-                ['goto_file', 'parse_errors'],
-                () => { cx_data.editor.addEventListener('changeSession', this.cachedBind(this.handleSessionChange)) },
-                () => {
-                    // CX keeps the annotations for files, so we have to remove them all before we can actually remove the event Listener
-                    if (this.annotatedFiles.size === 0) {
-                        cx_data.editor.removeEventListener('changeSession', this.cachedBind(this.handleSessionChange));
-                        // console.log('Removed session change listener')
-                    }
-                },
-            );
+            if (cx_data.terminal) {
+                handleOptionChange(
+                    ['goto_file', 'parse_errors'],
+                    () => { cx_data.editor.addEventListener('changeSession', this.cachedBind(this.handleSessionChange)) },
+                    () => {
+                        // CX keeps the annotations for files, so we have to remove them all before we can actually remove the event Listener
+                        if (this.annotatedFiles.size === 0) {
+                            cx_data.editor.removeEventListener('changeSession', this.cachedBind(this.handleSessionChange));
+                            // console.log('Removed session change listener')
+                        }
+                    },
+                );
+            }
         }
     }
 
@@ -125,7 +133,7 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
                 return 'activate';
 
             return cx_data.settings.options[option].value ? 'activate' : 'removed';
-        } , true);
+        }, true);
     }
 
     onUpdate(oldSettings: Settings) {
