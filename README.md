@@ -1,7 +1,7 @@
 # cx-master
 This extension adds cool stuff like a nice switch between Vim, VSCode and Ace keybindings.
 
-![settings](res/settings.png)
+<img alt='settings' src='res/settings.png' width='400'>
 
 
 ## Extension
@@ -18,10 +18,10 @@ All the web Extension code is currently inside the `extension/` directory.
 Go to [Releases](https://github.com/micha4w/cx-master/releases) page and download the latest `.xpi` file, it should install and update automagically.
 
 #### Chromium-Based Browsers
-    1. Go to [Releases](https://github.com/micha4w/cx-master/releases) page and download the latest `.zip`, then unpack it somewhere safe (If you delete the folder, the extension will uninstall)
-    2. Open [`chrome://extensions`](chrome://extensions) in your browser, flick the `Developer Mode` Switch (probably at the top right)
-    3. Click `Load unpacked` and choose the folder you just unpacked
-    4. Profit! *You can now undo Developer Mode if you want to*
+1. Go to [Releases](https://github.com/micha4w/cx-master/releases) page and download the latest `.zip`, then unpack it somewhere safe (If you delete the folder, the extension will uninstall)
+2. Open [`chrome://extensions`](chrome://extensions) in your browser, flick the `Developer Mode` Switch (probably at the top right)
+3. Click `Load unpacked` and choose the folder you just unpacked
+4. Profit! *You can now undo Developer Mode if you want to*
 
 > [!NOTE]
 > Chromium won't automatically update the addon, because it wants my money,
@@ -32,6 +32,7 @@ Go to [Releases](https://github.com/micha4w/cx-master/releases) page and downloa
 Requires npm
 ```sh
 cd extension
+npm i
 
 ## One of
 npm run package:firefox
