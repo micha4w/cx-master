@@ -63,12 +63,15 @@ Need docker installed
 wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-16.0.6.tar.gz
 tar xf llvmorg-16.0.6.tar.gz
 ```
-Once it finished unpacking, you need to inject some Code into the CMakeLists.txt of Clangd, located at `./llvm-project-llvmorg-16.0.6/clang-tools-extra/clangd/CMakeLists.txt`
+Once it finished unpacking, copy `cx-master/clangd-wasm/src/wrap-io.cpp` and `cx-master/clangd-wasm/web/settings.js` into the unpacked folder.
+Then you need to inject some Code at the very end of clangd's `CMakeLists.txt`, located at `./llvm-project-llvmorg-16.0.6/clang-tools-extra/clangd/CMakeLists.txt`
+```cmake
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+    set_target_properties(Engine PROPERTIES LINK_FLAGS "-sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE='$stringToNewUTF8' -sASYNCIFY -pthread -sPROXY_TO_PTHREAD -sEXIT_RUNTIME=1 -Wl,--wrap=fgets,--wrap=fread --pre-js=/src/settings.js")
+    target_sources(clangDaemon PUBLIC /src/wrap-io.cpp)
+endif()
+``` 
 
-  1. Add `clangd-wasm/src/wrap-io.cpp`
-  2. Set the linker / compile flags that are in the code block below (`CXXFLAGS` and `LDFLAGS`)
-
-(It's possible that you have to set them only after the first `cmake --build` call, because otherwise cmake will complain, since it's a host build, you can also try with an `if (EMSCRIPTEN) add_target_source(...) set_linker_flag(...)`. Sadly I did a stupid and accidentaly rm -rf'ed the CMakeLists.tst that I got to work)
 
 ```sh
 THREADS=6
