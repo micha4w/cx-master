@@ -42,22 +42,28 @@ The generated Code will be in `dist/` and the packaged Zip will be in `out/`.
 
 
 ## [WIP] cx-lsp
-This extension wants to some day add the clangd lsp to CodeExperts Ace Editor using a locally ran WebSocket or a clangd compiled to WASM.
+This Extension can run a clangd LSP natively on the PC and then connect to it via the Background Script.
 
 ### Native application
+Checkout the Mozilla documentation to see how you do it on non Linux.
 
-Create `~/.mozilla/native-messaging-hosts/cx_lsp.json` with following content
+For Linux: 
+Create `~/.mozilla/native-messaging-hosts/cx_lsp.json` with following content.
 ```json
 {
   "name": "cx_lsp",
   "description": "Bridge to connect Code Expert with a local C++ LSP",
-  "path": "/home/micha4w/.local/scripts/cx_lsp",
+  "path": "/home/micha4w/Code/JS/cx-lsp-clang/native-host/target/debug/cx-lsp-clang-controller",
   "type": "stdio",
-  "allowed_extensions": ["cx-lsp@micha4w.ch"]
+  "allowed_extensions": ["cx-master@micha4w.ch"]
 }
 ```
+Replace the path with the location of the Rust build.
+
 
 ### Building clangd to WASM
+This Chapter is just an info, I tried to get clangd working as a WASM WebWorker, but it ended up not working well, if you would love to try around yourself, here's the build that I ended up with:
+
 Need docker installed
 ```sh
 wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-16.0.6.tar.gz
@@ -97,6 +103,3 @@ docker run \
     emmake cmake --build build --target clangd -j $THREADS
     "
 ```
-
-### CORS
-For now you need to remove the Content-Security-Policy Response Header when running the lsp
