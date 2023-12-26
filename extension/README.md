@@ -15,4 +15,8 @@ The generated Code will be in `dist/` and the packaged Zip will be in `out/`.
 To get the files of stuff:
 ```js
 Meteor.connection.call("project_getProjectTree", {"projectId":"5XbLZfMfGPDNfeqLR","diffTree":false,"role":"student"}, console.log)
+
+Meteor.connection.call("editor_getFileContent", {"projectId":"5XbLZfMfGPDNfeqLR","fileKey":"vwsZ7xhopFjRy8zJM", console.log)
+["{\"msg\":\"method\",\"id\":\"24\",\"method\":\"editor_getFileContent\",\"params\":[{\"projectId\":\"Pbji3v8s8djkMmmvr\",\"fileKey\":\"vwsZ7xhopFjRy8zJM\",\"end\":131072}]}"]
 ```
+

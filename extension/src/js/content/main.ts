@@ -2,31 +2,22 @@ import browser from "webextension-polyfill";
 
 import inject from '../injected/main.ts?worker&url'; // Worker so the code gets transpiled
 import { applyDefaultSettings } from "~/lib/Settings";
+import { onMessage, sendMessage } from "~/lib/Utils";
 const injectURL = browser.runtime.getURL(inject);
 
-// TODO lsp
-// const background = browser.runtime.connect();
-// window.addEventListener('message', event => {
-//     if (event.source === window && event.data?.type?.startsWith('cx-lsp-'))
-//     background.postMessage(event.data);
-//     { }
+// window.addEventListener('cx-master', (event: MessageEvent) => {
+// const x = {};
+// for (const y in event) {
+//     x[y] = event[y];
+// }
+//     browser.runtime.sendMessage(JSON.stringify(event.data));
 // });
-// background.onMessage.addListener(data => window.postMessage(data, "*"));
-
 (async function () {
-    const scriptReady = new Promise<void>(res => {
-        function resolver(event: MessageEvent) {
-            if (event.source === window && event.data?.type === 'cxm-ready') {
-                window.removeEventListener('message', resolver)
-                res();
-            }
-        }
-
-        window.addEventListener('message', resolver);
-    });
+    const scriptReady = new Promise<void>(res => onMessage('ready', res, true));
 
     const script = document.createElement("script");
     script.src = injectURL;
+    script.type = 'module';
     document.head.appendChild(script);
 
     let settings = applyDefaultSettings((await browser.storage.sync.get('settings'))['settings']);
@@ -35,18 +26,33 @@ const injectURL = browser.runtime.getURL(inject);
     await browser.storage.sync.set({ 'settings': settings });
     await scriptReady;
 
+    let background: browser.Runtime.Port
+    onMessage('lsp-start', () => {
+        background = browser.runtime.connect();
+        background.onMessage.addListener(message => {
+            sendMessage('lsp-' + message.type as any, message.data);
+        });
+    });
+    onMessage('lsp-stop', () => {
+        background.postMessage({ type: 'stop' });
+        background.disconnect();
+    });
+    onMessage('lsp-request', (message) => {
+        background.postMessage({ type: 'request', message });
+    });
+    onMessage('lsp-file', ({ path, content }) => {
+        background.postMessage({ type: 'file', path, content });
+    });
+
     browser.storage.sync.onChanged.addListener((changed) => {
         if (loaded && changed.settings?.newValue) {
-            window.postMessage({
-                type: 'cxm-settings',
-                settings: changed.settings.newValue
-            });
+            sendMessage('settings', changed.settings.newValue);
         }
     });
 
     if (document.location.pathname.startsWith('/ide2/')) {
         loaded = true;
-        window.postMessage({ type: 'cxm-init', settings });
+        sendMessage('init', settings)
     }
 
     browser.runtime.onMessage.addListener(async (msg, sender) => {
@@ -54,12 +60,12 @@ const injectURL = browser.runtime.getURL(inject);
             if (document.location.pathname.startsWith('/ide2/')) {
                 if (!loaded) {
                     loaded = true;
-                    window.postMessage({ type: 'cxm-init', settings });
+                    sendMessage('init', settings);
                 }
 
             } else if (loaded) {
                 loaded = false;
-                window.postMessage({ type: 'cxm-unload' });
+                sendMessage('unload');
             }
         }
     });

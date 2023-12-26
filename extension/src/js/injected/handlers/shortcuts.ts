@@ -22,8 +22,13 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
             .filter(id => value === cx_data.settings.shortcuts[id].value && modifiers === cx_data.settings.shortcuts[id].modifiers);
 
         if (ids.length > 0) {
+            ids.sort((a, b) => 
+                cx_data.settings.shortcuts[a].index - cx_data.settings.shortcuts[b].index
+            );
             for (const id of ids) {
-                ShortcutsHandler.runners[id]();
+                if (ShortcutsHandler.runners[id]()) {
+                    break;
+                }
             }
 
             e.stopPropagation();
@@ -73,7 +78,7 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
     static async focusTerminal() {
         if (!document.querySelector('.terminal.xterm'))
             this.clickTab('Console');
-        
+
         await waitForElm(() => !!document.querySelector('.terminal.xterm'));
         cx_data.terminal.focus();
     }
@@ -83,6 +88,16 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
 
         ((document.querySelector('[data-test=ide-description] [data-test=markdown-area]') ??
             document.querySelector('[data-test=ide-history] .is-display-block')) as HTMLElement).focus();
+    }
+    static moveSuggestion(direction: 'up' | 'down') {
+        // @ts-ignore
+        const completer = cx_data.editor?.completer as any;
+        if (completer?.getPopup?.()?.isOpen) {
+            completer.getPopup().goTo?.(direction);
+            return true;
+        }
+        
+        return false;
     }
 
 
@@ -154,24 +169,34 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
                 this.clickTab('Console');
 
             ((document.querySelector('button[title=Run]') ??
-              document.querySelector('button[title=Stop]')) as HTMLButtonElement).click();
+                document.querySelector('button[title=Stop]')) as HTMLButtonElement).click();
         },
         test: () => {
             if (!document.querySelector('.terminal.xterm'))
                 this.clickTab('Console');
 
             ((document.querySelector('button[title=Test]') ??
-              document.querySelector('button[title=Stop]')) as HTMLButtonElement).click();
+                document.querySelector('button[title=Stop]')) as HTMLButtonElement).click();
         },
         format: () => {
             if (!cx_data.editor)
                 return;
 
-            const beautify = ace.require('ace/ext/beautify').beautify;
-            beautify(cx_data.editor.getSession());
+            if (cx_data.lsp) {
+                cx_data.lsp.format();
+            } else {
+                const beautify = ace.require('ace/ext/beautify').beautify;
+                beautify(cx_data.editor.getSession());
+            }
         },
         line_comment: () => {
             cx_data.editor?.toggleCommentLines();
+        },
+        next_suggestion: () => {
+            return this.moveSuggestion('down');
+        },
+        previous_suggestion: () => {
+            return this.moveSuggestion('up');
         },
     }
 }

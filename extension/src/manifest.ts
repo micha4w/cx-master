@@ -38,7 +38,7 @@ export function getManifestFirefox(): chrome.runtime.ManifestV2 {
       }
     },
     permissions: [
-      // "nativeMessaging",
+      "nativeMessaging",
       "storage"
     ],
     ...manifest,
@@ -69,7 +69,7 @@ export function getManifestChrome(): chrome.runtime.ManifestV3 {
       }
     ],
     permissions: [
-      // "nativeMessaging",
+      "nativeMessaging",
       "storage"
     ],
     ...manifest,

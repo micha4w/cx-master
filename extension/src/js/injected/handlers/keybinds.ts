@@ -17,6 +17,19 @@ export class KeybindsHandler implements ISettingsHandler {
                 await import('ace-builds/src-min-noconflict/keybinding-vim');
                 const vim = ace.require('ace/keyboard/vim');
                 cx_data.editor.setKeyboardHandler(vim.handler);
+                vim.Vim.defineEx('hover', '', (cm, params) => {
+                    const provider = cx_data.lsp as any;
+                    if (!provider?.$hoverTooltip)
+                        return;
+
+
+                    const event = { getDocumentPosition: () => cx_data.editor.getCursorPosition() };
+                    provider.$hoverTooltip.lastEvent = event;
+                    provider.$hoverTooltip.$gatherData(
+                        event,
+                        cx_data.editor
+                    );
+                });
                 // vim.Vim.defineEx('gmap','gm', (cm, params) => {
                 // if (shortcutRunners[params.args[1]])
                 //     maps.push([params.args[0], params.args[1]]);

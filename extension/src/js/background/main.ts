@@ -6,33 +6,36 @@ browser.tabs.onUpdated.addListener((tabid, info, tab) => {
     browser.tabs.sendMessage(tabid, 'cxm-update-event').catch(() => {});
 });
 
-browser.runtime.onMessage.addListener(console.info);
+browser.runtime.onMessage.addListener((message) => console.log(message));
 
 browser.runtime.onConnect.addListener(content => {
-    // console.log(content.sender.tab.id);
+    const clangd = browser.runtime.connectNative('cx_lsp');
 
-    // browser.tabs.get(content.sender.tab.id).then(tab => {
-    //     tab.
-    // });
+    clangd.onMessage.addListener(message => {
+        if (message.type === 'error' || message.type === 'panic') {
+            console.error(message);
+        } else if (message.type === 'warning') {
+            console.warn(message);
+        } else {
+            content.postMessage(message);
+            // console.info(message);
+        }
+    });
 
-    // TODO lsp
-    // const clangd = browser.runtime.connectNative('cx_lsp');
+    clangd.postMessage({ "type": "ready" });
 
-    // content.onMessage.addListener(message => {
-    //     clangd.postMessage(message);
-    // });
+    content.onMessage.addListener(message => {
+        // console.log(message);
+        clangd.postMessage(message);
+    });
 
-    // clangd.onMessage.addListener(message => {
-    //     if (message['type'] === 'error') {
-    //         console.error(message);
-    //     } else {
-    //         console.log(message);
-    //     }
+    content.onDisconnect.addListener(() => {
+        clangd.disconnect();
+        // console.log("Disconnected1");
+    })
 
-    //     content.postMessage(message);
-    // });
-
-    // clangd.onDisconnect.addListener(_ => {
-    //     console.log("Disconnected");
-    // });
+    clangd.onDisconnect.addListener(() => {
+        content.disconnect();
+        // console.log("Disconnected2");
+    });
 });

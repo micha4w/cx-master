@@ -1,10 +1,40 @@
+import type { LanguageProvider } from 'ace-linters/types/language-provider';
 import type { Terminal } from 'xterm';
 
 export var cx_data: {
     settings: Settings;
     editor?: AceAjax.Editor;
     terminal?: Terminal;
-} = { settings: undefined, editor: undefined, terminal: undefined };
+    lsp?: LanguageProvider;
+} = { settings: undefined };
+
+interface CXEventMap {
+    "init": [settings: Settings];
+    "settings": [settings: Settings];
+    "unload": [];
+    "ready": [];
+    "lsp-start": [];
+    "lsp-stop": [];
+    "lsp-file": [file: { path: string, content: string }];
+    "lsp-directory": [directory: string];
+    "lsp-request": [message: string];
+    "lsp-response": [message: string];
+}
+
+export function sendMessage<K extends keyof CXEventMap>(type: K, ...arg: CXEventMap[K]) {
+    window.postMessage({ type, arg }, '*'); // TODO use different '*'
+}
+
+export function onMessage<K extends keyof CXEventMap>(type: K, listener: (...arg: CXEventMap[K]) => any, once?: boolean) {
+    const wrapped = (event : MessageEvent) => {
+        if (event.source === window && event.data?.type === type) {
+            listener(...event.data.arg);
+            if (once)
+                window.removeEventListener('message', wrapped)
+        }
+    }
+    window.addEventListener('message', wrapped);
+}
 
 
 export class CachedBind {

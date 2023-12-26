@@ -3,28 +3,28 @@ export function applyDefaultSettings(settings : Settings) : Settings {
         keybind: "default",
         vimrc: "",
         options: {
-            // TODO lsp
-            // enable_lsp: {
-            //     description: "Enable ClangD LSP",
-            //     value: false,
-            // },
-            goto_file: {
+            lsp: {
                 index: 0,
+                description: "Enable ClangD LSP",
+                value: false,
+            },
+            goto_file: {
+                index: 1,
                 description: "Click link to go to file",
                 value: true,
             },
             fix_xterm_scrollbar: {
-                index: 1,
+                index: 2,
                 description: "Fix scrollbar in Firefox",
                 value: true,
             },
             parse_errors: {
-                index: 2,
+                index: 3,
                 description: "Parse and Display Errors",
                 value: true,
             },
             navigable_filetree: {
-                index: 3,
+                index: 4,
                 description: "Makes FileTree Keyboard Navigable",
                 value: true,
             }
@@ -65,57 +65,71 @@ export function applyDefaultSettings(settings : Settings) : Settings {
                 value: undefined,
                 modifiers: 0,
             },
-            focusleft: {
+            next_suggestion: {
                 index: 5,
+                short_description: "Next Suggestion",
+                description: "Selects the next Suggestion in AutoComplete Popup",
+                value: undefined,
+                modifiers: 0,
+            },
+            previous_suggestion: {
+                index: 6,
+                short_description: "Previous Suggestion",
+                description: "Selects the next Suggestion in AutoComplete Popup",
+                value: undefined,
+                modifiers: 0,
+            },
+            focusleft: {
+                index: 7,
                 short_description: "Focus left",
                 description: "Focuses the Tab to the left of the current Tab",
                 value: undefined,
                 modifiers: 0,
             },
             focusright: {
-                index: 6,
+                index: 8,
                 short_description: "Focus right",
                 description: "Focuses the Tab to the right of the current Tab",
                 value: undefined,
                 modifiers: 0,
             },
             focusup: {
-                index: 7,
+                index: 9,
                 short_description: "Focus top",
                 description: "Focuses the Tab to the top of the current Tab",
                 value: undefined,
                 modifiers: 0,
             },
             focusdown: {
-                index: 8,
+                index: 10,
                 short_description: "Focus bottom",
                 description: "Focuses the Tab to the bottom of the current Tab",
                 value: undefined,
                 modifiers: 0,
             },
             focusfiletree: {
-                index: 9,
+                index: 11,
                 short_description: "Focus FileTree",
                 description: "Opens and Focuses the FileTree Tab, so you can use Arrows (or hjkl in Vim mode) to navigate the files",
                 value: undefined,
                 modifiers: 0,
             },
             focuseditor: {
-                index: 10,
+                index: 12,
                 short_description: "Focus Editor",
                 description: "Focuses the ACE Editor",
                 value: undefined,
                 modifiers: 0,
             },
             focusterminal: {
-                index: 11,
+                index: 13,
                 short_description: "Focus Terminal",
                 description: "Opens and Focuses the Terminal",
                 value: undefined,
                 modifiers: 0,
             },
             focustask: {
-                index: 12,
+                index: 14,
                 short_description: "Focus Task",
                 description: "Opens and Focuses the Tak or History Tab",
                 value: undefined,
@@ -135,6 +149,13 @@ export function applyDefaultSettings(settings : Settings) : Settings {
                 for (const id in defaultSettings[setting]) {
                     if (!settings[setting][id])
                         settings[setting][id] = defaultSettings[setting][id];
+                    else {
+                        for (const key in defaultSettings[setting][id]) {
+                            if (key !== 'value' && key !== 'modifiers') {
+                                settings[setting][id][key] = defaultSettings[setting][id][key];
+                            }
+                        }
+                    }
                 }
             }
         }
