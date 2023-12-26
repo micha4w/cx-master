@@ -1,7 +1,7 @@
 # cx-master
 This extension adds cool stuff like a nice switch between Vim, VSCode and Ace keybindings.
 
-![settings](res/settings.png)
+<img alt='settings' src='res/settings.png' width='400'>
 
 
 ## Extension
@@ -18,10 +18,10 @@ All the web Extension code is currently inside the `extension/` directory.
 Go to [Releases](https://github.com/micha4w/cx-master/releases) page and download the latest `.xpi` file, it should install and update automagically.
 
 #### Chromium-Based Browsers
-    1. Go to [Releases](https://github.com/micha4w/cx-master/releases) page and download the latest `.zip`, then unpack it somewhere safe (If you delete the folder, the extension will uninstall)
-    2. Open [`chrome://extensions`](chrome://extensions) in your browser, flick the `Developer Mode` Switch (probably at the top right)
-    3. Click `Load unpacked` and choose the folder you just unpacked
-    4. Profit! *You can now undo Developer Mode if you want to*
+1. Go to [Releases](https://github.com/micha4w/cx-master/releases) page and download the latest `.zip`, then unpack it somewhere safe (If you delete the folder, the extension will uninstall)
+2. Open [`chrome://extensions`](chrome://extensions) in your browser, flick the `Developer Mode` Switch (probably at the top right)
+3. Click `Load unpacked` and choose the folder you just unpacked
+4. Profit! *You can now undo Developer Mode if you want to*
 
 > [!NOTE]
 > Chromium won't automatically update the addon, because it wants my money,
@@ -32,6 +32,7 @@ Go to [Releases](https://github.com/micha4w/cx-master/releases) page and downloa
 Requires npm
 ```sh
 cd extension
+npm i
 
 ## One of
 npm run package:firefox
@@ -62,12 +63,15 @@ Need docker installed
 wget https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-16.0.6.tar.gz
 tar xf llvmorg-16.0.6.tar.gz
 ```
-Once it finished unpacking, you need to inject some Code into the CMakeLists.txt of Clangd, located at `./llvm-project-llvmorg-16.0.6/clang-tools-extra/clangd/CMakeLists.txt`
+Once it finished unpacking, copy `cx-master/clangd-wasm/src/wrap-io.cpp` and `cx-master/clangd-wasm/web/settings.js` into the unpacked folder.
+Then you need to inject some Code at the very end of clangd's `CMakeLists.txt`, located at `./llvm-project-llvmorg-16.0.6/clang-tools-extra/clangd/CMakeLists.txt`
+```cmake
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+    set_target_properties(Engine PROPERTIES LINK_FLAGS "-sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE='$stringToNewUTF8' -sASYNCIFY -pthread -sPROXY_TO_PTHREAD -sEXIT_RUNTIME=1 -Wl,--wrap=fgets,--wrap=fread --pre-js=/src/settings.js")
+    target_sources(clangDaemon PUBLIC /src/wrap-io.cpp)
+endif()
+``` 
 
-  1. Add `clangd-wasm/src/wrap-io.cpp`
-  2. Set the linker / compile flags that are in the code block below (`CXXFLAGS` and `LDFLAGS`)
-
-(It's possible that you have to set them only after the first `cmake --build` call, because otherwise cmake will complain, since it's a host build, you can also try with an `if (EMSCRIPTEN) add_target_source(...) set_linker_flag(...)`. Sadly I did a stupid and accidentaly rm -rf'ed the CMakeLists.tst that I got to work)
 
 ```sh
 THREADS=6
