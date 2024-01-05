@@ -41,25 +41,39 @@ npm run package:chrome
 The generated Code will be in `dist/` and the packaged Zip will be in `out/`.
 
 
-## [WIP] cx-lsp
+## cx-lsp
 This Extension can run a clangd LSP natively on the PC and then connect to it via the Background Script.
 
 ### Native application
-Checkout the Mozilla documentation to see how you do it on non Linux.
+Checkout the Mozilla / Google documentation to see how you do it on non Linux.
 
-For Linux: 
-Create `~/.mozilla/native-messaging-hosts/cx_lsp.json` with following content.
+**Firefox:**
+Create `~/.mozilla/native-messaging-hosts/ch.micha4w.cx_lsp.json` with following content.
 ```json
 {
-  "name": "cx_lsp",
+  "name": "ch.micha4w.cx_lsp",
   "description": "Bridge to connect Code Expert with a local C++ LSP",
-  "path": "/home/micha4w/Code/JS/cx-lsp-clang/native-host/target/debug/cx-lsp-clang-controller",
+  "path": "${HOME}/.local/share/cx-lsp-controller",
   "type": "stdio",
   "allowed_extensions": ["cx-master@micha4w.ch"]
 }
 ```
-Replace the path with the location of the Rust build.
+Make sure to replace `${HOME}` with your home directory!
 
+**Chromium:**
+Create `/etc/chromium/native-messaging-hosts//ch.micha4w.cx_lsp.json` with following content.
+```json
+{
+  "name": "ch.micha4w.cx_lsp",
+  "description": "Bridge to connect Code Expert with a local C++ LSP",
+  "path": "${HOME}/.local/share/cx-lsp-controller",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://gcpaldhacgepnpnmflkphcjofcdibpbh/"]
+}
+```
+Make sure to replace `${HOME}` with your home directory!
+
+You'll also need to install clangd and download the lsp-controller from Releases and put it into the path specified in the json file you just created.
 
 ### Building clangd to WASM
 This Chapter is just an info, I tried to get clangd working as a WASM WebWorker, but it ended up not working well, if you would love to try around yourself, here's the build that I ended up with:

@@ -42,7 +42,6 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
         const clangdReady = new Promise<string>(res => onMessage('lsp-directory', res, true));
         sendMessage('lsp-start');
         this.directory = await clangdReady;
-        // TODO handle error of cx-lsp rust process
 
         const createFile = async (file: FileNode) => {
             if (file.isLeaf) {
@@ -87,7 +86,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
 
             // Because async makes it so that code runs in wrong order
             cx_data.editor.on('changeSession', ({ oldSession, session }) => {
-                // TODO cx_data.lsp?.closeDocument(oldSession);
+                cx_data.lsp?.closeDocument(oldSession);
 
                 function $changeMode(e) {
                     console.log('mode', cx_data.editor.session.getMode());
@@ -111,7 +110,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
             }
         } else if (oldValue && !newValue) {
             sendMessage('lsp-stop');
-            cx_data.lsp.dispose(); // TODO do anything?
+            cx_data.lsp.dispose();
             cx_data.lsp = undefined;
         }
     }

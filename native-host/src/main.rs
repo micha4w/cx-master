@@ -121,7 +121,6 @@ async fn handle_browser_message(
     Ok(true)
 }
 
-// TODO remove all unwraps
 #[tokio::main]
 async fn main() {
     panic::set_hook(Box::new(handle_panic));
@@ -134,7 +133,7 @@ async fn main() {
         let clangd = Arc::new(Mutex::new(Command::new("clangd")
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
-            .stderr(std::fs::File::create(temp.path().to_str().unwrap().to_owned() + "/stderr").unwrap())
+            // .stderr(std::fs::File::create(temp.path().to_str().unwrap().to_owned() + "/stderr").unwrap())
             .spawn()?));
 
         let mut owned_stdin = clangd

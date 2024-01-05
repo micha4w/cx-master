@@ -49,6 +49,7 @@ export function getManifestFirefox(): chrome.runtime.ManifestV2 {
 export function getManifestChrome(): chrome.runtime.ManifestV3 {
   return {
     manifest_version: 3,
+    key: "Y3hfbWFzdGVyQG1pY2hhNHcuY2g=",
     background: {
       service_worker: "src/js/background/main.ts",
     },
