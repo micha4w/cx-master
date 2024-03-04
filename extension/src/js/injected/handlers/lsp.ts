@@ -1,8 +1,9 @@
 import { CachedBind, cx_data, getCurrentFile, onMessage, sendMessage } from '~/lib/Utils';
+import { LanguageProvider, MessageController  } from "ace-linters/build/ace-linters";
 import { AceLanguageClient } from "ace-linters/build/ace-language-client";
 import type { RequestMessage } from "vscode-jsonrpc/lib/common/messages"
 import type { InitializeParams, DidOpenTextDocumentParams, DocumentRangeFormattingParams } from "vscode-languageserver-protocol/lib/common/protocol"
-import type { LanguageProvider } from 'ace-linters/types/language-provider';
+import Services from './workers/service?worker&inline';
 
 interface FileNode {
     key: string;
@@ -20,7 +21,6 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
     root: FileNode;
     directory: string;
     fakeWorker: { addEventListener, onmessage, postMessage };
-    provider: LanguageProvider;
 
     async setupProvider() {
         // if (!cx_data.settings.options['lsp'].value)
@@ -77,11 +77,20 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
             type: "webworker",
             worker: this.fakeWorker as Worker
         });
+
+    }
+
+    convertToDataURL(code: string) {
+        const binString = String.fromCodePoint(...new TextEncoder().encode(code));
+        return 'data:application/javascript;base64,' + btoa(binString);
+        // return 'data:application/javascript,' + encodeURIComponent(code);
     }
 
     async onLoadEditor() {
         if (cx_data.settings.options.lsp?.value) {
-            cx_data.lsp = await this.setupProvider();
+            // cx_data.lsp = await this.setupProvider();
+
+            cx_data.lsp = new LanguageProvider(new MessageController(new Services()));
             cx_data.lsp.registerEditor(cx_data.editor);
 
             // Because async makes it so that code runs in wrong order
@@ -89,6 +98,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
                 cx_data.lsp?.closeDocument(oldSession);
 
                 function $changeMode(e) {
+                    // Because why? something about ace-linters not recognizing the first mode Change
                     console.log('mode', cx_data.editor.session.getMode());
                     // @ts-ignore
                     cx_data.lsp.$sessionLanguageProviders[cx_data.editor.session.id]?.$changeMode()
@@ -109,7 +119,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
                 cx_data.lsp.registerEditor(cx_data.editor);
             }
         } else if (oldValue && !newValue) {
-            sendMessage('lsp-stop');
+            if (false) sendMessage('lsp-stop');
             cx_data.lsp.dispose();
             cx_data.lsp = undefined;
         }
@@ -117,7 +127,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
 
     onUnload() {
         if (cx_data.settings.options.lsp?.value)
-            sendMessage('lsp-stop');
+            if (false) sendMessage('lsp-stop');
     }
 
 

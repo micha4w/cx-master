@@ -3,13 +3,14 @@ import type { Terminal } from 'xterm';
 
 export var cx_data: {
     settings: Settings;
+    root: string;
     editor?: AceAjax.Editor;
     terminal?: Terminal;
     lsp?: LanguageProvider;
-} = { settings: undefined };
+} = { settings: undefined, root: undefined };
 
 interface CXEventMap {
-    "init": [settings: Settings];
+    "init": [settings: Settings, addonPath: string];
     "settings": [settings: Settings];
     "unload": [];
     "ready": [];

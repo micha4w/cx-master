@@ -8,23 +8,28 @@ export function applyDefaultSettings(settings : Settings) : Settings {
                 description: "Enable ClangD LSP",
                 value: false,
             },
-            goto_file: {
+            ruff: {
                 index: 1,
+                description: "Enable Ruff LSP",
+                value: false,
+            },
+            goto_file: {
+                index: 2,
                 description: "Click link to go to file",
                 value: true,
             },
             fix_xterm_scrollbar: {
-                index: 2,
+                index: 3,
                 description: "Fix scrollbar in Firefox",
                 value: true,
             },
             parse_errors: {
-                index: 3,
+                index: 4,
                 description: "Parse and Display Errors",
                 value: true,
             },
             navigable_filetree: {
-                index: 4,
+                index: 5,
                 description: "Makes FileTree Keyboard Navigable",
                 value: true,
             }

@@ -52,7 +52,7 @@ const injectURL = browser.runtime.getURL(inject);
 
     if (document.location.pathname.startsWith('/ide2/')) {
         loaded = true;
-        sendMessage('init', settings)
+        sendMessage('init', settings, browser.runtime.getURL(''))
     }
 
     browser.runtime.onMessage.addListener(async (msg, sender) => {
@@ -60,7 +60,7 @@ const injectURL = browser.runtime.getURL(inject);
             if (document.location.pathname.startsWith('/ide2/')) {
                 if (!loaded) {
                     loaded = true;
-                    sendMessage('init', settings);
+                    sendMessage('init', settings, browser.runtime.getURL(''));
                 }
 
             } else if (loaded) {

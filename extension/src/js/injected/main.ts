@@ -13,8 +13,9 @@ function editorLoaded() {
     }
 }
 
-onMessage('init', async (settings) => {
+onMessage('init', async (settings, root) => {
     cx_data.settings = settings;
+    cx_data.root = root;
 
     if (!document.querySelector('svg[data-test-id=project-info]')) {
         const meteorSocket: WebSocket = Meteor?.connection?._stream?.socket;

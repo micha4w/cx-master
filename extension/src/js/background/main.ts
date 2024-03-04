@@ -1,17 +1,19 @@
 import browser from "webextension-polyfill";
 
-
+const NATIVE_ID = 'ch.micha4w.cx_lsp';
 
 browser.tabs.onUpdated.addListener((tabid, info, tab) => {
     browser.tabs.sendMessage(tabid, 'cxm-update-event').catch(() => {});
 });
 
-browser.runtime.onMessage.addListener((message) => console.log(message));
+browser.runtime.onMessage.addListener(async (message) => {
+    return browser.runtime.sendNativeMessage(NATIVE_ID, message);
+});
 
 browser.runtime.onConnect.addListener(content => {
-    const clangd = browser.runtime.connectNative('cx_lsp');
+    const native = browser.runtime.connectNative(NATIVE_ID);
 
-    clangd.onMessage.addListener(message => {
+    native.onMessage.addListener(message => {
         if (message.type === 'error' || message.type === 'panic') {
             console.error(message);
         } else if (message.type === 'warning') {
@@ -22,19 +24,23 @@ browser.runtime.onConnect.addListener(content => {
         }
     });
 
-    clangd.postMessage({ "type": "ready" });
+    // TODO move this to content script
+    native.postMessage({ "type": "start", "command": "clangd" });
 
     content.onMessage.addListener(message => {
         // console.log(message);
-        clangd.postMessage(message);
+        native.postMessage(message);
     });
 
     content.onDisconnect.addListener(() => {
-        clangd.disconnect();
+        native.disconnect();
         // console.log("Disconnected1");
     })
 
-    clangd.onDisconnect.addListener(() => {
+    native.onDisconnect.addListener(() => {
+        if (native.error)
+            console.error(native.error);
+            
         content.disconnect();
         // console.log("Disconnected2");
     });

@@ -1,5 +1,6 @@
 import pkg from "../package.json";
 
+
 const manifest = {
   author: pkg.author,
   description: pkg.description,
