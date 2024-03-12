@@ -4,17 +4,26 @@ import type { Terminal } from 'xterm';
 export var cx_data: {
     settings: Settings;
     root: string;
+    containers: {
+        left_tabs: Element,
+        left_panel: Element,
+        editor_surface: Element,
+        lower_panel: Element,
+        lower_tabs: Element,
+        right_panel: Element,
+        right_tabs: Element,
+    };
     editor?: AceAjax.Editor;
     terminal?: Terminal;
     lsp?: LanguageProvider;
-} = { settings: undefined, root: undefined };
+} = { settings: undefined, root: undefined, containers: undefined };
 
 interface CXEventMap {
     "init": [settings: Settings, addonPath: string];
     "settings": [settings: Settings];
     "unload": [];
     "ready": [];
-    "lsp-start": [];
+    "lsp-start": [id: string];
     "lsp-stop": [];
     "lsp-file": [file: { path: string, content: string }];
     "lsp-directory": [directory: string];
@@ -53,7 +62,6 @@ export class CachedBind {
 
 
 export function waitForElm(pred: () => boolean) {
-    document.getSelection
     return new Promise<void>(resolve => {
         if (pred()) {
             resolve();
@@ -79,6 +87,11 @@ export function waitForTerminal() {
     const key = Object.keys(terminal_wrapper).find(key => key.startsWith('__reactFiber$'));
     cx_data.terminal = terminal_wrapper[key].child.updateQueue.lastEffect.deps[0];
 
+}
+
+export function convertToDataURL(code: string) {
+    const binString = String.fromCodePoint(...new TextEncoder().encode(code));
+    return 'data:application/javascript;base64,' + btoa(binString);
 }
 
 

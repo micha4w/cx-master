@@ -28,13 +28,23 @@ onMessage('init', async (settings, root) => {
         });
     }
 
-    const terminal_wrapper = document.querySelector('button[title=Compile]')?.closest('[data-testid=split-view-view]');
+    const container = document.querySelector("#cx-ide .split-view-container").children;
+    const main_container = container[2].querySelector(".split-view-container").children;
+    cx_data.containers = {
+        left_tabs: container[0],
+        left_panel: container[1],
+        
+        editor_surface: main_container[0],
 
-    // No terminal exists in text exercises
-    if (terminal_wrapper) {
-        const key = Object.keys(terminal_wrapper).find(key => key.startsWith('__reactFiber$'));
-        cx_data.terminal = terminal_wrapper[key].child.updateQueue.lastEffect.deps[0];
+        lower_panel: main_container[1],
+        lower_tabs: main_container[2],
+
+        right_panel: container[3],
+        right_tabs: container[4],
     }
+
+    const key = Object.keys(cx_data.containers.lower_panel).find(key => key.startsWith('__reactFiber$'));
+    cx_data.terminal = cx_data.containers.lower_panel[key].child.updateQueue.lastEffect.deps[0];
 
     handlers = [
         new ShortcutsHandler(),

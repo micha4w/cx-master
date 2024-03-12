@@ -38,56 +38,62 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
 
 
     static getFocused(): 'none' | 'filetree' | 'editor' | 'terminal' | 'task' {
-        if (document.querySelector('[data-test=project-tree-panel]')?.contains(document.activeElement))
+        if (cx_data.containers.left_panel.contains(document.activeElement))
             return 'filetree';
 
-        if (document.querySelector('[data-test=editor-panel]')?.contains(document.activeElement))
+        if (cx_data.containers.editor_surface.contains(document.activeElement))
             return 'editor';
 
-        if (document.querySelector('.terminal.xterm')?.contains(document.activeElement))
+        if (cx_data.containers.lower_panel.contains(document.activeElement))
             return 'terminal';
 
-        if (document.querySelector('.terminal.xterm')?.contains(document.activeElement))
-            return 'terminal';
-
-        if (document.querySelector('[data-test-id=ide-right-panel]')?.contains(document.activeElement))
-            return 'terminal';
+        if (cx_data.containers.right_panel.contains(document.activeElement))
+            return 'task';
 
         return 'none';
     }
 
-    static clickTab(label: string) {
-        for (const el of document.querySelectorAll("[data-test=sp-tab]")) {
-            if (el.textContent === label)
-                (el as HTMLElement).click();
-        }
+    static revealTabByIcon(container: Element, icon: string) {
+        if (!container.querySelector(`.is-selected-true [data-icon=${icon}]`))
+            (container.querySelector(`[data-test=sp-tab] [data-icon=${icon}]`).closest('[data-test=sp-tab]') as HTMLElement)?.click();
+
+        else if (container.querySelector('.tab-bar-collapsed'))
+            this.toggleTabs(container);
+    }
+
+    static toggleTabs(container: Element) {
+        (container.querySelector('.is-selected-true') as HTMLElement).click();
     }
 
     static focusFileTree() {
-        const tree = document.querySelector('[data-test=project-tree-panel]') as HTMLElement;
-        if (tree.clientWidth == 0) {
-            this.clickTab('Project file system');
-        }
+        if (cx_data.containers.left_tabs.querySelector('.tab-bar-collapsed'))
+            this.toggleTabs(cx_data.containers.left_tabs);
 
-        tree.focus();
-        tree.querySelector('.ant-tree-treenode-selected')?.classList.add('ant-tree-node-focused');
+
+        const tree = cx_data.containers.left_panel.querySelector('[data-test=project-tree-panel]') as HTMLElement;
+        if (tree) {
+            tree.focus();
+            tree.querySelector('.ant-tree-treenode-selected')?.classList.add('ant-tree-node-focused');
+        }
     }
     static focusEditor() {
         cx_data.editor?.focus();
     }
     static async focusTerminal() {
-        if (!document.querySelector('.terminal.xterm'))
-            this.clickTab('Console');
+        if (cx_data.containers.lower_tabs.querySelector('.tab-bar-collapsed'))
+            this.toggleTabs(cx_data.containers.lower_tabs);
 
-        await waitForElm(() => !!document.querySelector('.terminal.xterm'));
-        cx_data.terminal.focus();
+        if (cx_data.containers.lower_tabs.querySelector('.is-selected-true [data-icon=terminal]')) {
+            await waitForElm(() => !!cx_data.containers.lower_panel.querySelector('.terminal.xterm'));
+            cx_data.terminal?.focus();
+        }
     }
     static focusTask() {
-        if (document.querySelector('[data-test-id=ide-right-panel]').clientWidth == 0)
-            this.clickTab('Task');
+        if (cx_data.containers.right_tabs.querySelector('.tab-bar-collapsed'))
+            this.toggleTabs(cx_data.containers.right_tabs);
 
-        ((document.querySelector('[data-test=ide-description] [data-test=markdown-area]') ??
-            document.querySelector('[data-test=ide-history] .is-display-block')) as HTMLElement).focus();
+        ((cx_data.containers.right_panel.querySelector('[data-test=ide-description] [data-test=markdown-area]') ??
+            cx_data.containers.right_panel.querySelector('[data-test=ide-history] .is-display-block')) as HTMLElement)?.focus();
     }
     static moveSuggestion(direction: 'up' | 'down') {
         // @ts-ignore
@@ -133,10 +139,10 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
         },
         focusfiletree: () => {
             if (this.getFocused() === 'filetree') {
-                this.clickTab('Project file system');
+                this.toggleTabs(cx_data.containers.left_tabs);
                 this.focusEditor();
             } else {
-                this.focusTerminal();
+                this.focusFileTree();
             }
         },
         focuseditor: () => {
@@ -144,7 +150,7 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
         },
         focusterminal: () => {
             if (this.getFocused() === 'terminal') {
-                this.clickTab('Console');
+                this.toggleTabs(cx_data.containers.lower_tabs);
                 this.focusEditor();
             } else {
                 this.focusTerminal();
@@ -152,31 +158,31 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
         },
         focustask: () => {
             if (this.getFocused() === 'task') {
-                this.clickTab('Task');
+                this.toggleTabs(cx_data.containers.right_tabs);
                 this.focusEditor();
             } else {
                 this.focusTask();
             }
         },
         compile: () => {
-            if (!document.querySelector('.terminal.xterm'))
-                this.clickTab('Console');
+            this.revealTabByIcon(cx_data.containers.lower_tabs, 'terminal');
 
-            (document.querySelector('button[title=Compile]') as HTMLButtonElement).click();
+            (cx_data.containers.lower_panel.querySelector('button[title=Compile]') as HTMLButtonElement)?.click();
         },
         run: () => {
-            if (!document.querySelector('.terminal.xterm'))
-                this.clickTab('Console');
+            this.revealTabByIcon(cx_data.containers.lower_tabs, 'terminal');
 
-            ((document.querySelector('button[title=Run]') ??
-                document.querySelector('button[title=Stop]')) as HTMLButtonElement).click();
+            ((cx_data.containers.lower_panel.querySelector('button[title=Run]') ??
+                cx_data.containers.lower_panel.querySelector('button[title=Stop]')) as HTMLButtonElement)?.click();
         },
         test: () => {
-            if (!document.querySelector('.terminal.xterm'))
-                this.clickTab('Console');
+            if (cx_data.containers.lower_tabs.querySelector('[data-icon=flask]'))
+                this.revealTabByIcon(cx_data.containers.lower_tabs, 'flask');
+            else
+                this.revealTabByIcon(cx_data.containers.lower_tabs, 'terminal');
 
-            ((document.querySelector('button[title=Test]') ??
-                document.querySelector('button[title=Stop]')) as HTMLButtonElement).click();
+            ((cx_data.containers.lower_panel.querySelector('button[title=Test]') ??
+                cx_data.containers.lower_panel.querySelector('button[title=Stop]')) as HTMLButtonElement)?.click();
         },
         format: () => {
             if (!cx_data.editor)
