@@ -1,0 +1,8 @@
+{
+    "name": "PyRight",
+    "mode": "python",
+    "command": "pyright-langserver",
+    "args": [
+        "--stdio"
+    ]
+}

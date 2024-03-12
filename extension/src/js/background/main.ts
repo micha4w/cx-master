@@ -24,8 +24,6 @@ browser.runtime.onConnect.addListener(content => {
         }
     });
 
-    // TODO move this to content script
-    native.postMessage({ "type": "start", "command": "clangd" });
 
     content.onMessage.addListener(message => {
         // console.log(message);

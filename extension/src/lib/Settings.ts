@@ -2,17 +2,8 @@ export function applyDefaultSettings(settings : Settings) : Settings {
     const defaultSettings : Settings = {
         keybind: "default",
         vimrc: "",
+        lsp: undefined,
         options: {
-            lsp: {
-                index: 0,
-                description: "Enable ClangD LSP",
-                value: false,
-            },
-            ruff: {
-                index: 1,
-                description: "Enable Ruff LSP",
-                value: false,
-            },
             goto_file: {
                 index: 2,
                 description: "Click link to go to file",

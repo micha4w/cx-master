@@ -1,5 +1,6 @@
-use std::{error::Error, panic, path::Path, sync::Arc};
+use std::{panic, path::Path, sync::Arc};
 
+use anyhow::anyhow;
 use serde_json::{json, Value};
 use std::str;
 use tokio::{
@@ -8,9 +9,18 @@ use tokio::{
     sync::Mutex,
 };
 
-type DynError = Box<dyn Error + Send + Sync>;
-
 use chrome_native_messaging::send;
+
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+struct LSP {
+    id: Option<String>,
+    name: String,
+    mode: String,
+    command: String,
+    args: Option<Vec<String>>,
+}
 
 fn handle_panic(info: &std::panic::PanicInfo) {
     let msg = match info.payload().downcast_ref::<&'static str>() {
@@ -31,30 +41,47 @@ fn handle_panic(info: &std::panic::PanicInfo) {
 
 async fn read_lsp_message<R: AsyncBufReadExt + std::marker::Unpin>(
     buf: &mut R,
-) -> Result<String, DynError> {
-    let mut header = String::new();
-    buf.read_line(&mut header).await?;
-    // Command::new("notify-send").args([std::format!("{:?}", header)]).spawn()?;
+) -> anyhow::Result<String> {
+    let mut length = None;
+    loop {
+        let mut header = String::new();
+        buf.read_line(&mut header).await?;
+        // Command::new("notify-send").args([std::format!("{:?}", header)]).spawn()?;
 
-    let length = header.split_whitespace().collect::<Vec<&str>>()[1].parse::<usize>()?;
-    buf.read_line(&mut String::new()).await?;
+        if header == "\r\n" {
+            break;
+        }
 
-    // Command::new("notify-send").args([std::format!("{:?}", length)]).spawn()?;
+        let header_parts = header.split(": ").collect::<Vec<&str>>();
+        // send!({ "type": "log", "header": header_parts })?;
+        if header_parts.len() != 2 {
+            return Err(anyhow!("Header sent by LSP is invalid"));
+        }
 
-    let mut msg = vec![0; length];
-    buf.read_exact(&mut msg).await?;
-    // Command::new("notify-send").args([std::format!("{:?}", msg)]).spawn()?;
-    Ok(str::from_utf8(&msg)?.to_string())
+        if header_parts[0] == "Content-Length" {
+            length = Some(header_parts[1].trim().parse::<usize>()?);
+        }
+    }
+
+    match length {
+        Some(len) => {
+            let mut msg = vec![0; len];
+            buf.read_exact(&mut msg).await?;
+            // Command::new("notify-send").args([std::format!("{:?}", msg)]).spawn()?;
+            Ok(str::from_utf8(&msg)?.to_string())
+        }
+        None => Err(anyhow!("LSPs Headers didn't include Content-Length")),
+    }
 }
 
-async fn handle_lsp_message(message: String) -> Result<(), Box<dyn Error + Send + Sync>> {
+async fn handle_lsp_message(message: String) -> anyhow::Result<()> {
     send!({ "type": "response", "data": message })?;
     Ok(())
 }
 
 async fn read_browser_message<R: AsyncRead + std::marker::Unpin>(
     mut input: R,
-) -> Result<Value, DynError> {
+) -> anyhow::Result<Value> {
     let mut buf = [0; 4];
     input.read_exact(&mut buf).await?;
     // send!({ "type": "info", "data": std::format!("{:?}", buf), "data2": u32::from_ne_bytes(buf) })?;
@@ -72,7 +99,7 @@ async fn handle_browser_message(
     message: &Value,
     clangd: &mut ChildStdin,
     dir: &Path,
-) -> Result<bool, DynError> {
+) -> anyhow::Result<bool> {
     // Command::new("notify-send").args([std::format!("{:?}", message)]).spawn()?;
     // Command::new("notify-send").args([std::format!("{:?}", message["type"].as_str())]).spawn()?;
     // send!({ "type": "info", "data": std::format!("{:?}", message) })?;
@@ -82,9 +109,10 @@ async fn handle_browser_message(
                 let path = dir.join(rel_path.strip_prefix("/").unwrap_or(rel_path));
                 if !path.starts_with(dir) {
                     send!({
-                        "type": "warning",
+                        "type": "error",
                         "data": "tried to access file outside temp directory".to_owned() + path.to_str().unwrap_or("")
                     })?;
+                    return Ok(true);
                 }
 
                 if let Some(content) = message["content"].as_str() {
@@ -121,62 +149,117 @@ async fn handle_browser_message(
     Ok(true)
 }
 
+async fn run_lsp(entry: &String) -> anyhow::Result<()> {
+    let path = "lsps/".to_owned() + entry + ".json";
+    let config_path = std::path::Path::new(&path);
+
+    let config_str = std::fs::read_to_string(config_path)?;
+    let config = serde_json::from_str::<LSP>(&config_str)?;
+
+    // send!({ "type": "log", "data": "Read config file" })?;
+    let temp = Arc::new(tempfile::tempdir()?);
+    // send!({ "type": "log", "data": "Created temp dir" })?;
+
+    let lsp = Arc::new(Mutex::new(
+        Command::new(config.command)
+            .args(config.args.unwrap_or(Vec::new()))
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            // .stderr(
+            //     std::fs::File::create("/home/micha4w/Code/JS/cx-master/native-host/stderr")
+            //         .unwrap(),
+            // )
+            .current_dir(temp.path())
+            .spawn()?,
+    ));
+    // send!({ "type": "log", "data": "Created Command" })?;
+
+    let mut owned_stdin = lsp.lock().await.stdin.take();
+    let mut owned_stdout = lsp.lock().await.stdout.take();
+
+    send!({ "type": "directory", "data": temp.path().to_str().ok_or(anyhow!("Temp directory has no path"))? })?;
+    let lsp_handler = tokio::spawn(async move {
+        let mut stdout = BufReader::new(
+            owned_stdout
+                .as_mut()
+                .ok_or(anyhow!("Can't attach to LSPs Stdout"))?,
+        );
+        loop {
+            let message = read_lsp_message(&mut stdout).await?;
+            let ret = handle_lsp_message(message).await;
+            if ret.is_err() {
+                return ret;
+            }
+        }
+    });
+
+    let browser_handler = tokio::spawn(async move {
+        let stdin = owned_stdin
+            .as_mut()
+            .ok_or(anyhow!("Can't attach to LSPs Stdin"))?;
+
+        let tempdir = temp.path();
+        loop {
+            let message = read_browser_message(tokio::io::stdin()).await?;
+            if !handle_browser_message(&message, stdin, tempdir).await? {
+                return anyhow::Ok(());
+            }
+        }
+    });
+
+    tokio::select! {
+        ret = lsp_handler => ret,
+        ret = browser_handler => ret,
+    }??;
+
+    Ok(())
+}
+
+fn list_lsps() -> anyhow::Result<()> {
+    let files = std::path::Path::new("lsps")
+        .read_dir()?
+        .map(|file_res| {
+            file_res.and_then(|file: std::fs::DirEntry| -> std::io::Result<_> {
+                let id = file
+                    .path()
+                    .file_stem()
+                    .map(|str| str.to_owned().into_string().ok())
+                    .flatten();
+
+                let config_str = std::fs::read_to_string(file.path())?;
+                let mut config = serde_json::from_str::<LSP>(&config_str)?;
+                config.id = id;
+                Ok(config)
+            })
+        })
+        .filter(|lsp| match lsp {
+            Ok(lsp) => lsp.id.is_some(),
+            Err(_) => true,
+        })
+        .collect::<std::io::Result<Vec<_>>>()?;
+    send!({ "type": "lsp-entries", "data": files })?;
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     panic::set_hook(Box::new(handle_panic));
 
-    let result: Result<(), DynError> = (async {
-        read_browser_message(tokio::io::stdin()).await?;
-
-        let temp = Arc::new(tempfile::tempdir()?);
-
-        let clangd = Arc::new(Mutex::new(Command::new("clangd")
-            .stdin(std::process::Stdio::piped())
-            .stdout(std::process::Stdio::piped())
-            // .stderr(std::fs::File::create(temp.path().to_str().unwrap().to_owned() + "/stderr").unwrap())
-            .spawn()?));
-
-        let mut owned_stdin = clangd
-            .lock().await
-            .stdin.take();
-        let mut owned_stdout = clangd
-            .lock().await
-            .stdout.take();
-
-        send!({ "type": "directory", "data": temp.path().to_str().ok_or("Temp directory has no path")? })?;
-        let lsp_handler = tokio::spawn(async move {
-            let mut stdout = BufReader::new(
-                owned_stdout
-                    .as_mut()
-                    .ok_or("Can't attach to clangd Stdout")?
-            );
-            loop {
-                let message = read_lsp_message(&mut stdout).await?;
-                let ret = handle_lsp_message(message).await;
-                if ret.is_err() {
-                    return ret;
-                }
+    let result: anyhow::Result<()> = (async {
+        let start = read_browser_message(tokio::io::stdin()).await?;
+        match start["type"].as_str() {
+            Some("start") => {
+                let lsp_entry = start["id"]
+                    .as_str()
+                    .ok_or(anyhow!("Start command doesn't include id"))?;
+                run_lsp(&lsp_entry.to_owned()).await
             }
-        });
-
-        let browser_handler = tokio::spawn(async move {
-            let stdin = owned_stdin.as_mut().ok_or("Can't attach to clangd Stdin")?;
-
-            let tempdir = temp.path();
-            loop {
-                let message = read_browser_message(tokio::io::stdin()).await?;
-                if !handle_browser_message(&message, stdin, tempdir).await? {
-                    return Ok::<(), DynError>(());
-                }
+            Some("list-lsps") => list_lsps(),
+            _ => {
+                send!({ "type": "error", "data": "Start command didn't get sent" })?;
+                Ok(())
             }
-        });
-
-        tokio::select! {
-            ret = lsp_handler => ret,
-            ret = browser_handler => ret,
-        }??;
-
-        Ok(())
+        }
     })
     .await;
     if let Err(err) = result {

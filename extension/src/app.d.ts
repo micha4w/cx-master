@@ -18,9 +18,16 @@ declare global {
 		modifiers: KeyboardModifiers;
 	}
 
+	interface LSP {
+		id: string,
+		name: string,
+		mode: string,
+	}
+
 	type KeyBindingsID = "default" | "vim" | "vscode" | "emacs" | "sublime";
 	interface Settings {
 		keybind: KeyBindingsID;
+		lsp: LSP | undefined;
 		vimrc: string;
 		options: Record<string, Option>;
 		shortcuts: Record<string, KeyboardShortcut>;

@@ -1,9 +1,6 @@
 import { CachedBind, cx_data, getCurrentFile, onMessage, sendMessage } from '~/lib/Utils';
-import { LanguageProvider, MessageController  } from "ace-linters/build/ace-linters";
 import { AceLanguageClient } from "ace-linters/build/ace-language-client";
-import type { RequestMessage } from "vscode-jsonrpc/lib/common/messages"
-import type { InitializeParams, DidOpenTextDocumentParams, DocumentRangeFormattingParams } from "vscode-languageserver-protocol/lib/common/protocol"
-import Services from './workers/service?worker&inline';
+import LSP from "vscode-languageserver-protocol/browser"
 
 interface FileNode {
     key: string;
@@ -22,9 +19,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
     directory: string;
     fakeWorker: { addEventListener, onmessage, postMessage };
 
-    async setupProvider() {
-        // if (!cx_data.settings.options['lsp'].value)
-        //     return;
+    async setupLSP() {
         this.projectId = new URL(document.URL).pathname.split('/').at(-1);
 
         const files: { tree: FileNode[] } = await new Promise((resolve, reject) =>
@@ -40,7 +35,9 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
         this.root = files.tree[0];
 
         const clangdReady = new Promise<string>(res => onMessage('lsp-directory', res, true));
-        sendMessage('lsp-start');
+
+        onMessage('lsp-response', this.cachedBind(this.onLSPMessage));
+        sendMessage('lsp-start', cx_data.settings.lsp.id);
         this.directory = await clangdReady;
 
         const createFile = async (file: FileNode) => {
@@ -64,42 +61,31 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
 
         await createFile(this.root);
 
-        onMessage('lsp-response', this.cachedBind(this.onLSPMessage));
-
         this.fakeWorker = {
             postMessage: this.onAceMessage.bind(this),
             addEventListener: () => { },
             onmessage: undefined,
         };
-        return AceLanguageClient.for({
+        cx_data.lsp = AceLanguageClient.for({
+            // module: () => LanguageClient,
             module: () => import("ace-linters/build/language-client"),
-            modes: "c_cpp",
+            modes: cx_data.settings.lsp.mode,
             type: "webworker",
             worker: this.fakeWorker as Worker
         });
 
-    }
-
-    convertToDataURL(code: string) {
-        const binString = String.fromCodePoint(...new TextEncoder().encode(code));
-        return 'data:application/javascript;base64,' + btoa(binString);
-        // return 'data:application/javascript,' + encodeURIComponent(code);
+        cx_data.lsp.registerEditor(cx_data.editor);
     }
 
     async onLoadEditor() {
-        if (cx_data.settings.options.lsp?.value) {
-            // cx_data.lsp = await this.setupProvider();
+        if (cx_data.settings.lsp) {
+            await this.setupLSP();
 
-            cx_data.lsp = new LanguageProvider(new MessageController(new Services()));
-            cx_data.lsp.registerEditor(cx_data.editor);
-
-            // Because async makes it so that code runs in wrong order
+            // Because async makes it so that code runs in wrong order, the editor is not completely loaded
             cx_data.editor.on('changeSession', ({ oldSession, session }) => {
                 cx_data.lsp?.closeDocument(oldSession);
 
                 function $changeMode(e) {
-                    // Because why? something about ace-linters not recognizing the first mode Change
-                    console.log('mode', cx_data.editor.session.getMode());
                     // @ts-ignore
                     cx_data.lsp.$sessionLanguageProviders[cx_data.editor.session.id]?.$changeMode()
 
@@ -111,39 +97,40 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
     }
 
     async onUpdate(oldSettings: Settings) {
-        const oldValue = oldSettings.options.lsp?.value;
-        const newValue = cx_data.settings.options.lsp?.value;
-        if (!oldValue && newValue) {
-            if (cx_data.editor) {
-                cx_data.lsp = await this.setupProvider();
-                cx_data.lsp.registerEditor(cx_data.editor);
+        if (cx_data.settings.lsp?.id !== oldSettings.lsp?.id) {
+            if (cx_data.lsp) {
+                sendMessage('lsp-stop');
+                cx_data.lsp.dispose();
+                cx_data.lsp = undefined;
             }
-        } else if (oldValue && !newValue) {
-            if (false) sendMessage('lsp-stop');
+
+            if (cx_data.editor && cx_data.settings.lsp)
+                await this.setupLSP();
+        }
+    }
+
+    onUnload() {
+        if (cx_data.lsp) {
+            sendMessage('lsp-stop');
             cx_data.lsp.dispose();
             cx_data.lsp = undefined;
         }
     }
 
-    onUnload() {
-        if (cx_data.settings.options.lsp?.value)
-            if (false) sendMessage('lsp-stop');
-    }
 
-
-    onAceMessage(message: RequestMessage) {
+    onAceMessage(message: LSP.RequestMessage) {
         // console.log('request', message)
 
         if (message.method === 'initialize') {
-            const params = message.params as InitializeParams;
+            const params = message.params as LSP.InitializeParams;
             params.rootUri = 'file://' + this.directory;
         }
-        if (message.method.startsWith('textDocument/')) {
-            (message.params as DidOpenTextDocumentParams).textDocument
+        if (message.method?.startsWith('textDocument/')) {
+            (message.params as LSP.DidOpenTextDocumentParams).textDocument
                 .uri = 'file://' + this.directory + '/' + getCurrentFile();
 
             if (message.method === 'textDocument/rangeFormatting') {
-                const end = (message.params as DocumentRangeFormattingParams).range.end;
+                const end = (message.params as LSP.DocumentRangeFormattingParams).range.end;
                 if (end.character < 0) {
                     end.line -= 1;
                     end.character = cx_data.editor.session.getLine(end.line).length + end.character;
@@ -154,8 +141,19 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
         sendMessage('lsp-request', JSON.stringify(message))
     }
 
-    onLSPMessage(message: string) {
-        this.fakeWorker.onmessage({ data: JSON.parse(message) });
+    onLSPMessage(data: string) {
+        const message = JSON.parse(data);
+
+        if (message.error?.code === LSP.LSPErrorCodes.ContentModified) {
+            return;
+        }
+
+        if (message.method === 'textDocument/publishDiagnostics') {
+            // @ts-ignore
+            (message.params as PublishDiagnosticsParams).uri = cx_data.editor.session.id + '.' + cx_data.settings.lsp.mode;
+        }
+
+        this.fakeWorker.onmessage({ data: message });
         // console.log('response', JSON.parse(message));
     }
 }

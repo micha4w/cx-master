@@ -1,0 +1,4 @@
+#! /usr/bin/env nix-shell
+#! nix-shell --quiet -i bash -p gccStdenv clang-tools nodePackages.pyright
+
+target/debug/cx-lsp-controller

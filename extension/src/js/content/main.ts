@@ -27,11 +27,12 @@ const injectURL = browser.runtime.getURL(inject);
     await scriptReady;
 
     let background: browser.Runtime.Port
-    onMessage('lsp-start', () => {
+    onMessage('lsp-start', (id) => {
         background = browser.runtime.connect();
         background.onMessage.addListener(message => {
             sendMessage('lsp-' + message.type as any, message.data);
         });
+        background.postMessage({ type: 'start', id })
     });
     onMessage('lsp-stop', () => {
         background.postMessage({ type: 'stop' });
