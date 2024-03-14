@@ -31,7 +31,7 @@ jobs:
         working-directory: extension
       - run: npm run package:${{matrix.target}}
         working-directory: extension
-      - run: cp extension/out/chrome/code-expert-master-${{github.ref_name}}-${{matrix.target}}.zip release
+      - run: cp extension/out/${{matrix.target}}/code-expert-master-${{github.ref_name}}-${{matrix.target}}.zip release
 
 
   build-rust:
@@ -45,13 +45,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: mkdir -p release
-      - run: |
-          cargo build --verbose --release --target=${{matrix.target}}
-          cp target/${{matrix.target}}/release/cx-lsp-controller ../release/cx-lsp-controller-${{github.ref.name}}-${{matrix.target}}
+      - run: rustup target add x86_64-pc-windows-gnu
+      - run: cargo build --verbose --release --target=${{matrix.target}}
         working-directory: native-host
+      - run: cp native-host/target/${{matrix.target}}/release/cx-lsp-controller release/cx-lsp-controller-${{github.ref.name}}-${{matrix.target}}
 
   release:
     runs-on: ubuntu-latest
+    needs: 
+      - build-ts
+      - build-rust
     steps:
     - name: Release
       uses: softprops/action-gh-release@v2
