@@ -1,5 +1,4 @@
 name: Create Release
-
 on:
   push:
     branches: [ "main" ]
@@ -10,58 +9,52 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  release:
+  build-ts:
     runs-on: ubuntu-latest
-    env:
-      working-directory: extension
+    strategy:
+      matrix:
+        target:
+          - chrome
+          - firefox
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir -p release
+
+      - name: Use Node.js 21.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 21.x
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - run: npm ci
+        working-directory: extension
+      - run: npm run package:${{matrix.target}}
+        working-directory: extension
+      - run: cp extension/out/chrome/code-expert-master-${{github.ref_name}}-${{matrix.target}}.zip release
+
+
+  build-rust:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
 
     steps:
-    - uses: actions/checkout@v4
-    - run: mkdir -p release
+      - uses: actions/checkout@v4
+      - run: mkdir -p release
+      - run: |
+          cargo build --verbose --release --target=${{matrix.target}}
+          cp target/${{matrix.target}}/release/cx-lsp-controller ../release/cx-lsp-controller-${{github.ref.name}}-${{matrix.target}}
+        working-directory: native-host
 
-    - name: Use Node.js 21.x
-      uses: actions/setup-node@v4
-      with:
-        node-version: 21.x
-        cache: npm
-        cache-dependency-path: extension/package-lock.json
-    - run: npm ci
-      working-directory: extension
-    - run: npm run package:firefox
-      working-directory: extension
-    - run: cp extension/out/firefox/code-expert-master-${{github.ref_name}}-firefox.zip release
-    - run: npm run package:chrome
-      working-directory: extension
-    - run: cp extension/out/chrome/code-expert-master-${{github.ref_name}}-chrome.zip release
-
-    - &build_rust
-      run: |
-        cargo build --verbose --release --target=$TARGET
-        cp target/$TARGET/release/cx-lsp-controller ../release/cx-lsp-controller-${{github.ref.name}}-$TARGET
-      working-directory: native-host
-
-    - &build_ts
-      run: |
-        npm run package:$TARGET
-        cp extension/out/$TARGET/code-expert-master-${{github.ref_name}}-$TARGET.zip ../release
-      working-directory: extension
-
-    - name: Build for Linux
-      <<: *build
-      env:
-        TARGET: x86_64-unknown-linux-gnu
-
-    - name: Build for Windows
-      <<: *build
-      env:
-        TARGET: x86_64-pc-windows-gnu
-
-    - name: Build for Windows
-      <<: *build
-      env:
-        TARGET: x86_64-pc-windows-gnu
-
+  release:
+    runs-on: ubuntu-latest
+    steps:
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
         files: release/*
+
