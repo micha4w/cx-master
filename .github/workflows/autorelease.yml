@@ -43,11 +43,11 @@ jobs:
         target:
           - os: windows-latest
             bin: cx-lsp-controller.exe
-            name: cx-lsp-controller-${{github.ref.name}}-windows-x86_64.exe
+            name: cx-lsp-controller-${{github.ref_name}}-windows-x86_64.exe
 
           - os: ubuntu-latest
-            bin: cx-controller
-            name: cx-lsp-controller-${{github.ref.name}}-linux-x86_64
+            bin: cx-lsp-controller
+            name: cx-lsp-controller-${{github.ref_name}}-linux-x86_64
 
     steps:
       - uses: actions/checkout@v4
@@ -69,6 +69,7 @@ jobs:
     - uses: actions/download-artifact@v4
       with:
         path: release
+        merge-multiple: true
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
