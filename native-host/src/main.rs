@@ -153,15 +153,15 @@ async fn run_lsp(entry: &String) -> anyhow::Result<()> {
     let path = "lsps/".to_owned() + entry + ".json";
     let config_path = std::path::Path::new(&path);
 
-    let config_str = std::fs::read_to_string(config_path)?;
+    let config_str = std::fs::read_to_string(config_path)
+        .map_err(|e| anyhow!("Failed to read lsp config file {}: {}", config_path.display(), e.to_string()))?;
     let config = serde_json::from_str::<LSP>(&config_str)?;
 
     // send!({ "type": "log", "data": "Read config file" })?;
     let temp = Arc::new(tempfile::tempdir()?);
     // send!({ "type": "log", "data": "Created temp dir" })?;
 
-    let lsp = Arc::new(Mutex::new(
-        Command::new(config.command)
+    let lsp = Arc::new(Mutex::new(Command::new(&config.command)
             .args(config.args.unwrap_or(Vec::new()))
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
@@ -170,7 +170,8 @@ async fn run_lsp(entry: &String) -> anyhow::Result<()> {
             //         .unwrap(),
             // )
             .current_dir(temp.path())
-            .spawn()?,
+            .spawn()
+            .map_err(|e| anyhow!("Failed to start '{}' process: {}", &config.command, e.to_string()))?
     ));
     // send!({ "type": "log", "data": "Created Command" })?;
 
