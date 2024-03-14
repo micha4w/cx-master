@@ -36,7 +36,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: extension/out/${{matrix.target}}/code-expert-master-${{github.ref_name}}-${{matrix.target}}.zip
-          # name: code-expert-master-${{github.ref_name}}-${{matrix.target}}.zip
+          name: code-expert-master-${{github.ref_name}}-${{matrix.target}}.zip
 
 
   build-rust:
@@ -63,7 +63,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: native-host/target/release/${{matrix.target.name}}
-          # name: ${{matrix.target.name}}
+          name: ${{matrix.target.name}}
 
   release:
     runs-on: ubuntu-latest
@@ -74,7 +74,7 @@ jobs:
     - uses: actions/download-artifact@v4
       with:
         path: release
-        # merge-multiple: true
+        merge-multiple: true
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
