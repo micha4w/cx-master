@@ -1,7 +1,6 @@
 name: Create Release
 on:
   push:
-    branches: [ "main" ]
     tags:
       - 'v*.*.*'
 
@@ -58,7 +57,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          path: native-host/target/release/cx-lsp-controller
+          path: native-host/target/release/${{matrix.target.bin}}
           name: ${{matrix.target.name}}
 
   release:
@@ -67,6 +66,9 @@ jobs:
       - build-ts
       - build-rust
     steps:
+    - uses: actions/download-artifact@v4
+      with:
+        path: release
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
