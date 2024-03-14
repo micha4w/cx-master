@@ -24,8 +24,11 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 21.x
-        cache: 'npm'
+        cache: npm
+        cache-dependency-path: ${{env.working-directory}}/package-lock.json
     - run: npm ci
       working-directory: ${{env.working-directory}}
-    - run: npm run build
+    - run: npm run package:firefox
+      working-directory: ${{env.working-directory}}
+    - run: npm run package:chrome
       working-directory: ${{env.working-directory}}
