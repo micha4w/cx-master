@@ -7,6 +7,7 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
     }
 
     async onLoadEditor() {
+        // @ts-ignore
         await import('ace-builds/src-min-noconflict/ext-beautify');
     }
 
@@ -55,7 +56,7 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
 
     static revealTabByIcon(container: Element, icon: string) {
         if (!container.querySelector(`.is-selected-true [data-icon=${icon}]`))
-            (container.querySelector(`[data-test=sp-tab] [data-icon=${icon}]`).closest('[data-test=sp-tab]') as HTMLElement)?.click();
+            (container.querySelector(`[data-test=sp-tab] [data-icon=${icon}]`)!.closest('[data-test=sp-tab]') as HTMLElement)?.click();
 
         else if (container.querySelector('.tab-bar-collapsed'))
             this.toggleTabs(container);
@@ -108,7 +109,7 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
 
 
 
-    static runners = {
+    static runners : Record<string, () => boolean | void> = {
         focusleft: () => {
             switch (this.getFocused()) {
                 case 'editor':

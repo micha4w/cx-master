@@ -1,6 +1,7 @@
 import type { LanguageProvider } from 'ace-linters/types/language-provider';
 import type { Terminal } from 'xterm';
 
+// @ts-ignore
 export var cx_data: {
     settings: Settings;
     root: string;
@@ -16,7 +17,7 @@ export var cx_data: {
     editor?: AceAjax.Editor;
     terminal?: Terminal;
     lsp?: LanguageProvider;
-} = { settings: undefined, root: undefined, containers: undefined };
+} = {};
 
 interface CXEventMap {
     "init": [settings: Settings, addonPath: string];
@@ -25,6 +26,7 @@ interface CXEventMap {
     "ready": [];
     "lsp-start": [id: string];
     "lsp-stop": [];
+    "lsp-error": [message: string];
     "lsp-file": [file: { path: string, content: string }];
     "lsp-directory": [directory: string];
     "lsp-request": [message: string];
@@ -82,30 +84,18 @@ export function waitForElm(pred: () => boolean) {
     });
 }
 
-export function waitForTerminal() {
-    const terminal_wrapper = document.querySelector('button[title=Compile]').closest('[data-testid=split-view-view]');
-    const key = Object.keys(terminal_wrapper).find(key => key.startsWith('__reactFiber$'));
-    cx_data.terminal = terminal_wrapper[key].child.updateQueue.lastEffect.deps[0];
-
-}
-
-export function convertToDataURL(code: string) {
-    const binString = String.fromCodePoint(...new TextEncoder().encode(code));
-    return 'data:application/javascript;base64,' + btoa(binString);
-}
-
 
 export function getAntTreePath(el: Element) {
-    let path = el.textContent.trim();
-    let indent = el.querySelector('.ant-tree-indent').clientWidth;
+    let path = el.textContent!.trim();
+    let indent = el.querySelector('.ant-tree-indent')!.clientWidth;
 
-    while (el = el.previousElementSibling) {
-        let nextIndent = el.querySelector('.ant-tree-indent').clientWidth;
+    while (el = el.previousElementSibling!) {
+        let nextIndent = el.querySelector('.ant-tree-indent')!.clientWidth;
 
         if (nextIndent < indent) {
             if (nextIndent == 0) break;
 
-            path = el.textContent.trim() + '/' + path;
+            path = el.textContent!.trim() + '/' + path;
             indent = nextIndent;
         }
     }
@@ -115,11 +105,11 @@ export function getAntTreePath(el: Element) {
 
 export function getCurrentFile() {
     const el = document.querySelector('[data-test=project-tree-panel] .ant-tree-treenode-selected');
-    if (el) return getAntTreePath(el);
+    return getAntTreePath(el!);
 }
 
 export function openFile(path: string) {
-    const tree = document.querySelector('[data-test=project-tree-panel] .ant-tree-list-holder-inner');
+    const tree = document.querySelector('[data-test=project-tree-panel] .ant-tree-list-holder-inner')!;
     if (tree.children[0].classList.contains('ant-tree-treenode-switcher-close')) {
         (tree.children[0].querySelector('.ant-tree-switcher') as HTMLElement).click();
     }
@@ -127,12 +117,12 @@ export function openFile(path: string) {
     const paths = path.split('/');
     let current = 0;
     for (let i = 1; i < tree.children.length; i++) {
-        const indent = tree.children[i].querySelector('.ant-tree-indent').children.length - 1;
+        const indent = tree.children[i].querySelector('.ant-tree-indent')!.children.length - 1;
         if (indent < current) {
             break;
         }
 
-        if (indent == current && tree.children[i].textContent.trim() === paths[current]) {
+        if (indent == current && tree.children[i].textContent?.trim() === paths[current]) {
             current++;
             if (current >= paths.length) {
                 (tree.children[i].querySelector('.ant-tree-node-content-wrapper') as HTMLElement).click();

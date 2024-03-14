@@ -20,6 +20,7 @@ const manifest = {
 };
 
 export function getManifestFirefox(): chrome.runtime.ManifestV2 {
+  /** @ts-ignore */
   return {
     manifest_version: 2,
     background: {
@@ -48,6 +49,7 @@ export function getManifestFirefox(): chrome.runtime.ManifestV2 {
 
 
 export function getManifestChrome(): chrome.runtime.ManifestV3 {
+  /** @ts-ignore */
   return {
     manifest_version: 3,
     key: "Y3hfbWFzdGVyQG1pY2hhNHcuY2g=",

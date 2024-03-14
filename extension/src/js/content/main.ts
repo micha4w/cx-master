@@ -56,7 +56,7 @@ const injectURL = browser.runtime.getURL(inject);
         sendMessage('init', settings, browser.runtime.getURL(''))
     }
 
-    browser.runtime.onMessage.addListener(async (msg, sender) => {
+    browser.runtime.onMessage.addListener(async (msg) => {
         if (msg === 'cxm-update-event') {
             if (document.location.pathname.startsWith('/ide2/')) {
                 if (!loaded) {

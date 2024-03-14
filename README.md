@@ -6,6 +6,7 @@ This extension adds cool stuff like a nice switch between Vim, VSCode and Ace ke
 
 ## Extension
 All the web Extension code is currently inside the `extension/` directory.
+Code Expert uses `ace-builds` version 1.22.0 and `xterm` version `5.3.0` so when updating the package.json, make sure to keep these versions the same.
 
 ### Installing
 > [!NOTE]

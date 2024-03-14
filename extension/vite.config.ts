@@ -1,6 +1,6 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import webExtension from "@samrum/vite-plugin-web-extension";
+import webExtension from "vite-plugin-web-extension";
 import path from "path";
 import { getManifestChrome, getManifestFirefox } from "./src/manifest";
 
@@ -10,12 +10,13 @@ export default defineConfig(() => {
     plugins: [
       svelte(),
       webExtension({
-        manifest: process.env.CX_BROWSER === 'chrome' ? getManifestChrome() : getManifestFirefox(),
+        browser: process.env.CX_BROWSER,
+        manifest: process.env.CX_BROWSER === 'chrome' ? getManifestChrome : getManifestFirefox,
       }),
     ],
     worker: {
-      // To allow for dynamic importing in your injected.ts?url&worker
-      format: 'es'
+      // To allow for dynamic importing in your injected.ts?url&worker TODO
+      format: "es" as const
     },
     resolve: {
       alias: {

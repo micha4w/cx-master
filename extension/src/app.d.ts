@@ -1,4 +1,4 @@
-import type { KeyboardModifiers } from "$lib/KeyboardModifiers";
+import type { KeyboardModifiers } from "./lib/KeyboardModifiers";
 
 declare global {
 	var Meteor : any;
@@ -34,10 +34,10 @@ declare global {
 	}
 
 	interface ISettingsHandler {
-		onLoad?();
-		onLoadEditor?();
-		onUpdate?(oldSettings : Settings);
-		onUnload?();
+		onLoad?() : void;
+		onLoadEditor?() : void;
+		onUpdate?(oldSettings : Settings) : void;
+		onUnload?() : void;
 	}
 }
 

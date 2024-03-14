@@ -19,9 +19,10 @@ browser.runtime.onConnect.addListener(content => {
         } else if (message.type === 'warning') {
             console.warn(message);
         } else {
-            content.postMessage(message);
             // console.info(message);
         }
+
+        content.postMessage(message);
     });
 
 
@@ -36,8 +37,10 @@ browser.runtime.onConnect.addListener(content => {
     })
 
     native.onDisconnect.addListener(() => {
-        if (native.error)
+        if (native.error) {
+            content.postMessage({ type: "error", data: native.error });
             console.error(native.error);
+        }
             
         content.disconnect();
         // console.log("Disconnected2");

@@ -28,8 +28,8 @@ onMessage('init', async (settings, root) => {
         });
     }
 
-    const container = document.querySelector("#cx-ide .split-view-container").children;
-    const main_container = container[2].querySelector(".split-view-container").children;
+    const container = document.querySelector("#cx-ide .split-view-container")!.children;
+    const main_container = container[2].querySelector(".split-view-container")!.children;
     cx_data.containers = {
         left_tabs: container[0],
         left_panel: container[1],
@@ -44,7 +44,8 @@ onMessage('init', async (settings, root) => {
     }
 
     const key = Object.keys(cx_data.containers.lower_panel).find(key => key.startsWith('__reactFiber$'));
-    cx_data.terminal = cx_data.containers.lower_panel[key].child.updateQueue.lastEffect.deps[0];
+    if (key)
+        cx_data.terminal = (cx_data.containers.lower_panel as any)[key].child.updateQueue.lastEffect.deps[0];
 
     handlers = [
         new ShortcutsHandler(),

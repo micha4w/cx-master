@@ -5,9 +5,9 @@ import { ShortcutsHandler } from './shortcuts';
 
 export class OptionsHandler extends CachedBind implements ISettingsHandler {
     documentObserver = new MutationObserver(this.handleDOMMutation.bind(this));
-    linkProviderDisposer: IDisposable;
+    linkProviderDisposer!: IDisposable;
 
-    gotoAfterOpened: [number, number];
+    gotoAfterOpened!: [number, number];
     doneParsingCompilerOutput = false;
     compilerAnnotations = new Map<string, AceAjax.Annotation[]>();
     annotatedFiles = new Set<string>();
@@ -77,15 +77,15 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
                     fileTree.removeAttribute('tabindex');
                     fileTree.removeEventListener('blur', this.cachedBind(this.handleFileTreeBlur));
                     fileTree.removeEventListener('keydown', this.cachedBind(this.handleFileTreeKeyDown));
-                    document.head.querySelector('#cxm-filetree-style').remove();
+                    document.head.querySelector('#cxm-filetree-style')?.remove();
                 },
             );
 
             if (cx_data.terminal) {
                 handleOptionChange(
                     ['goto_file'],
-                    () => this.linkProviderDisposer = cx_data.terminal.registerLinkProvider(new LinkProvider(
-                        cx_data.terminal,
+                    () => this.linkProviderDisposer = cx_data.terminal!.registerLinkProvider(new LinkProvider(
+                        cx_data.terminal!,
                         /(\/var\/lib\/cxrun\/projectfiles\/.*?:(?:\d+:){0,2})/,
                         this.handleFileLinkClicked.bind(this),
                     )),
@@ -110,11 +110,11 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
             if (cx_data.terminal) {
                 handleOptionChange(
                     ['goto_file', 'parse_errors'],
-                    () => { cx_data.editor.addEventListener('changeSession', this.cachedBind(this.handleSessionChange)) },
+                    () => { cx_data.editor!.addEventListener('changeSession', this.cachedBind(this.handleSessionChange)) },
                     () => {
                         // CX keeps the annotations for files, so we have to remove them all before we can actually remove the event Listener
                         if (this.annotatedFiles.size === 0) {
-                            cx_data.editor.removeEventListener('changeSession', this.cachedBind(this.handleSessionChange));
+                            cx_data.editor!.removeEventListener('changeSession', this.cachedBind(this.handleSessionChange));
                             // console.log('Removed session change listener')
                         }
                     },
@@ -184,7 +184,7 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
             if (this.doneParsingCompilerOutput) {
                 // New compile output
                 this.doneParsingCompilerOutput = false;
-                cx_data.editor.session.clearAnnotations();
+                cx_data.editor!.session.clearAnnotations();
                 this.compilerAnnotations.clear();
             }
 
@@ -203,7 +203,7 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
                 );
                 const file = getCurrentFile();
                 if (this.compilerAnnotations.has(file)) {
-                    cx_data.editor.session.setAnnotations(this.compilerAnnotations.get(file));
+                    cx_data.editor!.session.setAnnotations(this.compilerAnnotations.get(file)!);
                     this.annotatedFiles.add(file);
                 }
             }
@@ -212,7 +212,7 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
 
     handleSessionChange({ session }: Record<string, AceAjax.IEditSession>) {
         if (this.gotoAfterOpened)
-            cx_data.editor.gotoLine(...this.gotoAfterOpened);
+            cx_data.editor!.gotoLine(...this.gotoAfterOpened);
 
         setTimeout(() => {
             const file = getCurrentFile();
@@ -224,13 +224,13 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
                     this.annotatedFiles.delete(file);
 
                     if (this.annotatedFiles.size === 0 && !cx_data.settings.options.goto_file.value) {
-                        cx_data.editor.removeEventListener('changeSession', this.cachedBind(this.handleSessionChange));
+                        cx_data.editor!.removeEventListener('changeSession', this.cachedBind(this.handleSessionChange));
                         // console.log('Removed session change listener')
                     }
                 }
             } else {
                 if (this.compilerAnnotations.has(file)) {
-                    session.setAnnotations(this.compilerAnnotations.get(file));
+                    session.setAnnotations(this.compilerAnnotations.get(file)!);
                     this.annotatedFiles.add(file);
                 }
             }
@@ -249,7 +249,7 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
             if (line) this.gotoAfterOpened = [+line, +column - 1];
         } else {
             ShortcutsHandler.focusEditor();
-            if (line) cx_data.editor.gotoLine(+line, +column - 1);
+            if (line) cx_data.editor!.gotoLine(+line, +column - 1);
         }
     }
 
@@ -260,7 +260,7 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
         if (!cx_data.settings.options.navigable_filetree)
             return;
 
-        const fileTree = document.querySelector('.ant-tree-list-holder-inner');
+        const fileTree = document.querySelector('.ant-tree-list-holder-inner')!;
         let focused = fileTree.querySelector('.ant-tree-node-focused')
             ?? fileTree.querySelector('.ant-tree-treenode-selected')
             ?? fileTree.children[0];

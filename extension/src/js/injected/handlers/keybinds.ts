@@ -14,16 +14,16 @@ export class KeybindsHandler implements ISettingsHandler {
                 cx_data.editor.setKeyboardHandler('');
                 break;
             case 'vim':
+                // @ts-ignore
                 await import('ace-builds/src-min-noconflict/keybinding-vim');
                 const vim = ace.require('ace/keyboard/vim');
                 cx_data.editor.setKeyboardHandler(vim.handler);
-                vim.Vim.defineEx('hover', '', (cm, params) => {
+                vim.Vim.defineEx('hover', '', (cm : any, params : any) => {
                     const provider = cx_data.lsp as any;
                     if (!provider?.$hoverTooltip)
                         return;
 
-
-                    const event = { getDocumentPosition: () => cx_data.editor.getCursorPosition() };
+                    const event = { getDocumentPosition: () => cx_data.editor!.getCursorPosition() };
                     provider.$hoverTooltip.lastEvent = event;
                     provider.$hoverTooltip.$gatherData(
                         event,
@@ -40,14 +40,17 @@ export class KeybindsHandler implements ISettingsHandler {
                 }
                 break;
             case 'emacs':
+                // @ts-ignore
                 await import('ace-builds/src-min-noconflict/keybinding-emacs');
                 cx_data.editor.setKeyboardHandler(ace.require('ace/keyboard/emacs').handler);
                 break;
             case 'vscode':
+                // @ts-ignore
                 await import('ace-builds/src-min-noconflict/keybinding-vscode');
                 cx_data.editor.setKeyboardHandler(ace.require('ace/keyboard/vscode').handler);
                 break;
             case 'sublime':
+                // @ts-ignore
                 await import('ace-builds/src-min-noconflict/keybinding-sublime');
                 cx_data.editor.setKeyboardHandler(ace.require('ace/keyboard/sublime').handler);
                 break;
