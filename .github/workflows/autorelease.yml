@@ -18,7 +18,6 @@ jobs:
           - firefox
     steps:
       - uses: actions/checkout@v4
-      - run: mkdir -p release
 
       - name: Use Node.js 21.x
         uses: actions/setup-node@v4
@@ -31,24 +30,36 @@ jobs:
         working-directory: extension
       - run: npm run package:${{matrix.target}}
         working-directory: extension
-      - run: cp extension/out/${{matrix.target}}/code-expert-master-${{github.ref_name}}-${{matrix.target}}.zip release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: extension/out/${{matrix.target}}/code-expert-master-${{github.ref_name}}-${{matrix.target}}.zip
+          name: code-expert-master-${{github.ref_name}}-${{matrix.target}}.zip
 
 
   build-rust:
-    runs-on: ubuntu-latest
+    runs-on: ${{matrix.target.os}}
     strategy:
       matrix:
         target:
-          - x86_64-unknown-linux-gnu
-          - x86_64-pc-windows-gnu
+          - os: windows-latest
+            bin: cx-lsp-controller.exe
+            name: cx-lsp-controller-${{github.ref.name}}-windows-x86_64.exe
+
+          - os: ubuntu-latest
+            bin: cx-controller
+            name: cx-lsp-controller-${{github.ref.name}}-linux-x86_64
 
     steps:
       - uses: actions/checkout@v4
-      - run: mkdir -p release
-      - run: rustup target add x86_64-pc-windows-gnu
-      - run: cargo build --verbose --release --target=${{matrix.target}}
+
+      - run: cargo build --verbose --release
         working-directory: native-host
-      - run: cp native-host/target/${{matrix.target}}/release/cx-lsp-controller release/cx-lsp-controller-${{github.ref.name}}-${{matrix.target}}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: native-host/target/release/cx-lsp-controller
+          name: ${{matrix.target.name}}
 
   release:
     runs-on: ubuntu-latest
