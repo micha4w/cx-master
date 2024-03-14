@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
     paths:
       - native-host/**
+      - .github/workflows/*
   pull_request:
     branches: [ "main" ]
 
