@@ -12,7 +12,7 @@
     "package:chrome": "npm run clean && rm -f out/chrome/code-expert-master-v$npm_package_version-chrome.zip && env CX_BROWSER=chrome npm run build && mkdir -p out/chrome && cd dist && zip -r ../out/chrome/code-expert-master-v$npm_package_version-chrome.zip *",
     "clean": "rm -rf dist",
     "serve:firefox": "web-ext run -s dist -u 'https://expert.ethz.ch/ide2/6uxhJX82Wx99mu3Ta' -p '/home/micha4w/.mozilla/firefox/m41vdnzq.micha4w' --devtools",
-    "serve:chrome": "web-ext run -t chromium -s dist u 'https://expert.ethz.ch/ide2/6uxhJX82Wx99mu3Ta'",
+    "serve:chrome": "web-ext run -t chromium -s dist -u 'https://expert.ethz.ch/ide2/6uxhJX82Wx99mu3Ta'",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "license": "MIT",

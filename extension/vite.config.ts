@@ -4,14 +4,16 @@ import webExtension from "vite-plugin-web-extension";
 import path from "path";
 import { getManifestChrome, getManifestFirefox } from "./src/manifest";
 
+const browser = process.env.CX_BROWSER ?? 'firefox'
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
     plugins: [
       svelte(),
       webExtension({
-        browser: process.env.CX_BROWSER,
-        manifest: process.env.CX_BROWSER === 'chrome' ? getManifestChrome : getManifestFirefox,
+        browser,
+        manifest: browser === 'chrome' ? getManifestChrome : getManifestFirefox,
       }),
     ],
     worker: {
