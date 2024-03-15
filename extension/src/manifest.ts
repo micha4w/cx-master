@@ -1,5 +1,10 @@
 import pkg from "../package.json";
 
+const icons = {
+  64: "icons/cxm-icon-64.png",
+  128: "icons/cxm-icon-128.png",
+  512: "icons/cxm-icon-512.png",
+};
 
 const manifest = {
   author: pkg.author,
@@ -13,10 +18,7 @@ const manifest = {
       run_at: "document_idle",
     },
   ],
-  icons: {
-    64: "icons/64.png",
-    512: "icons/512.png",
-  },
+  icons,
 };
 
 export function getManifestFirefox(): chrome.runtime.ManifestV2 {
@@ -27,9 +29,7 @@ export function getManifestFirefox(): chrome.runtime.ManifestV2 {
       scripts: ["src/js/background/main.ts"],
     },
     browser_action: {
-      default_icon: {
-        128: "icons/cxm-icon-128.png",
-      },
+      default_icon: { ...icons },
       default_popup: "src/ui/popup/index.html",
     },
     browser_specific_settings: {
@@ -56,9 +56,7 @@ export function getManifestChrome(): chrome.runtime.ManifestV3 {
       service_worker: "src/js/background/main.ts",
     },
     action: {
-      default_icon: {
-        128: "icons/cxm-icon-128.png",
-      },
+      default_icon: { ...icons },
       default_popup: "src/ui/popup/index.html",
     },
     web_accessible_resources: [
