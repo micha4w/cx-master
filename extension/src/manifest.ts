@@ -28,7 +28,7 @@ export function getManifestFirefox(): chrome.runtime.ManifestV2 {
     },
     browser_action: {
       default_icon: {
-        64: "icons/64.png",
+        128: "icons/cxm-icon-128.png",
       },
       default_popup: "src/ui/popup/index.html",
     },
@@ -57,7 +57,7 @@ export function getManifestChrome(): chrome.runtime.ManifestV3 {
     },
     action: {
       default_icon: {
-        64: "icons/64.png",
+        128: "icons/cxm-icon-128.png",
       },
       default_popup: "src/ui/popup/index.html",
     },
