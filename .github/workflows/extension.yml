@@ -9,6 +9,8 @@ on:
     paths:
       - extension/**
       - .github/workflows/*
+    tags-ignore:
+      - 'v*.*.*'
   pull_request:
     branches: [ "main" ]
 

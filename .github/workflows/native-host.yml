@@ -6,6 +6,9 @@ on:
     paths:
       - native-host/**
       - .github/workflows/*
+    tags-ignore:
+      - 'v*.*.*'
+    
   pull_request:
     branches: [ "main" ]
 
