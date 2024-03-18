@@ -62,7 +62,7 @@ jobs:
           CX_OS_STRING: ${{matrix.target.name}}
           RUSTFLAGS: -C target-feature=+crt-static
 
-      - run: cx-lsp-controller${{matrix.target.extension}} cx-lsp-controller-${{matrix.target.os_string}}${{matrix.target.extension}}
+      - run: cp cx-lsp-controller${{matrix.target.extension}} cx-lsp-controller-${{matrix.target.os_string}}${{matrix.target.extension}}
         working-directory: native-host/target/${{matrix.target.os_string}}/release
 
       - uses: actions/upload-artifact@v4
