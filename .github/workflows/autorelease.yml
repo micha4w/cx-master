@@ -46,16 +46,16 @@ jobs:
         target:
           - os: windows-latest
             extension: .exe
-            os_string: windows-x86_64
+            os_string: x86_64-pc-windows-msvc
 
           - os: ubuntu-latest
             extension: null
-            os_string: linux-x86_64
+            os_string: x86_64-unknown-linux-gnu
 
     steps:
       - uses: actions/checkout@v4
 
-      - run: cargo build --verbose --release
+      - run: cargo build --verbose --release --target ${{matrix.target.os_string}}
         working-directory: native-host
         env:
           CX_VERSION: ${{github.ref_name}}
