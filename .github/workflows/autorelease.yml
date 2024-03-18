@@ -45,24 +45,30 @@ jobs:
       matrix:
         target:
           - os: windows-latest
-            bin: cx-lsp-controller.exe
-            name: cx-lsp-controller-${{github.ref_name}}-windows-x86_64.exe
+            extension: .exe
+            os_string: windows-x86_64
 
           - os: ubuntu-latest
-            bin: cx-lsp-controller
-            name: cx-lsp-controller-${{github.ref_name}}-linux-x86_64
+            extension: null
+            os_string: linux-x86_64
 
     steps:
       - uses: actions/checkout@v4
 
       - run: cargo build --verbose --release
         working-directory: native-host
+        env:
+          CX_VERSION: ${{github.ref_name}}
+          CX_OS_STRING: ${{matrix.target.name}}
+          RUSTFLAGS: -C target-feature=+crt-static
 
-      - run: cp native-host/target/release/${{matrix.target.bin}} native-host/target/release/${{matrix.target.name}}
+      - run: cp cx-lsp-controller${{matrix.target.extension}} cx-lsp-controller-${{matrix.target.os_string}}${{matrix.target.extension}}
+        working-directory:
+          native-host/target/release/
 
       - uses: actions/upload-artifact@v4
         with:
-          path: native-host/target/release/${{matrix.target.name}}
+          path: native-host/target/release/cx-lsp-controller-${{matrix.target.os_string}}${{matrix.target.extension}}
           name: ${{matrix.target.name}}
 
   release:
