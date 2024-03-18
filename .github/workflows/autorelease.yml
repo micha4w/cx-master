@@ -67,8 +67,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          path: native-host/target/${{matrix.target.os_string}}/release/cx-lsp-controller-${{matrix.target.os_string}}${{matrix.target.extension}}
-          name: ${{matrix.target.name}}
+          path: native-host/target/${{matrix.target.os_string}}release/cx-lsp-controller-${{matrix.target.os_string}}${{matrix.target.extension}}
+          name: cx-lsp-controller-${{matrix.target.os_string}}${{matrix.target.extension}}
 
   release:
     runs-on: ubuntu-latest
