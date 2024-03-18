@@ -1,12 +1,13 @@
 use std::{panic, path::Path, sync::Arc};
 
 use anyhow::anyhow;
+use chrono::{DateTime, Utc};
 use serde_json::{json, Value};
 use std::str;
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWriteExt, BufReader},
     process::{ChildStdin, Command},
-    sync::Mutex,
+    sync::Mutex, time,
 };
 
 use chrome_native_messaging::send;
@@ -242,17 +243,99 @@ fn list_lsps() -> anyhow::Result<()> {
     Ok(())
 }
 
+async fn update(version: &str) -> anyhow::Result<()> {
+
+    let release = self_update::backends::github::ReleaseList::configure()
+        .repo_owner("micha4w")
+        .repo_name("cx-master")
+        .build()?
+        .fetch()?
+        .into_iter()
+        .find(|rel| rel.version == version.trim_start_matches('v'))
+        .ok_or(anyhow!("Failed to find the Github Release to update to"))?;
+
+    let os_string = std::option_env!("CX_OS_STRING")
+        .ok_or(anyhow!("Executable was built without the correct Environment Variables"))?;
+
+    let asset = release.assets.iter()
+        .find(|asset| asset.name.contains(os_string))
+        .ok_or(anyhow!("Failed to find the correct Binary"))?;
+
+    let tmp_dir = tempfile::Builder::new()
+        .prefix("self_update")
+        .tempdir_in(::std::env::current_dir()?)?;
+
+    time::sleep(time::Duration::from_secs(5)).await;
+    let tmp_tarball_path = tmp_dir.path().join(&asset.name);
+    let tmp_tarball = ::std::fs::File::create(&tmp_tarball_path)?;
+
+    self_update::Download::from_url(&asset.download_url)
+        .set_header(reqwest::header::ACCEPT, "application/octet-stream".parse()?)
+        .download_to(&tmp_tarball)?;
+
+    let bin_name = std::path::PathBuf::from("self_update_bin");
+    self_update::Extract::from_source(&tmp_tarball_path)
+        // .archive(self_update::ArchiveKind::Tar(Some(self_update::Compression::Gz)))
+        .extract_file(&tmp_dir.path(), &bin_name)?;
+
+    let new_exe = tmp_dir.path().join(bin_name);
+    self_replace::self_replace(new_exe)?;
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     panic::set_hook(Box::new(handle_panic));
 
     let result: anyhow::Result<()> = (async {
+
         let start = read_browser_message(tokio::io::stdin()).await?;
         match start["type"].as_str() {
+            Some("ensure-version") => {
+                let update_lock = std::path::Path::new(".update-lock");
+                let is_updating;
+                if update_lock.exists() {
+                    let update_time: DateTime<Utc> = std::fs::read_to_string(update_lock)?.parse()?;
+                    if chrono::Utc::now() - update_time > chrono::TimeDelta::try_minutes(1).unwrap() {
+                        // Probably the update failed
+                        is_updating = false;
+                        std::fs::remove_file(update_lock)?;
+                    } else {
+                        is_updating = true;
+                    }
+                } else {
+                    is_updating = false;
+                }
+
+                if !is_updating {
+                    let version = start["version"]
+                        .as_str()
+                        .ok_or(anyhow!("Ensure version command doesn't include version"))?
+                        .trim_start_matches('v');
+
+                    let should_update = std::option_env!("CX_VERSION")
+                        .map(|ver| ver != version.trim_start_matches('v'))
+                        .unwrap_or(false);
+
+                    send!({ "type": "ensure-version", "updating": should_update })?;
+                    if should_update {
+                        std::fs::write(update_lock, format!("{}", chrono::Utc::now()))?;
+
+                        update(version).await?;
+
+                        std::fs::remove_file(update_lock)?;
+                    }
+                } else {
+                    send!({ "type": "ensure-version", "updating": is_updating })?;
+                }
+
+                Ok(())
+            },
             Some("start") => {
                 let lsp_entry = start["id"]
                     .as_str()
-                    .ok_or(anyhow!("Start command doesn't include id"))?;
+                    .ok_or(anyhow!("Start command doesn't include LSP id"))?;
                 run_lsp(&lsp_entry.to_owned()).await
             }
             Some("list-lsps") => list_lsps(),

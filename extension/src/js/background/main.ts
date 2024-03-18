@@ -1,16 +1,43 @@
 import browser from "webextension-polyfill";
+import pkg from "~/../package.json"
 
 const NATIVE_ID = 'ch.micha4w.cx_lsp';
+let is_up_to_date = false;
 
-browser.tabs.onUpdated.addListener((tabid, info, tab) => {
-    browser.tabs.sendMessage(tabid, 'cxm-update-event').catch(() => {});
+
+async function ensureVersion() {
+    if (is_up_to_date) return
+    
+    while (true) {
+        const clangd = browser.runtime.connectNative(NATIVE_ID);
+
+        const responsePromise = new Promise<any>(res => clangd.onMessage.addListener(res));
+        clangd.postMessage({ type: "ensure-version", version: pkg.version });
+        const { updating } = await responsePromise;
+
+        if (!updating) {
+            is_up_to_date = true;
+            return;
+        }
+
+        await new Promise((res) => clangd.onDisconnect.addListener(res));
+        await new Promise((res) => setTimeout(res, 5000));
+    }
+}
+
+
+browser.tabs.onUpdated.addListener((tabId, info, tab) => {
+    browser.tabs.sendMessage(tabId, 'cxm-update-event').catch(() => {});
 });
 
 browser.runtime.onMessage.addListener(async (message) => {
+    await ensureVersion();
     return browser.runtime.sendNativeMessage(NATIVE_ID, message);
 });
 
-browser.runtime.onConnect.addListener(content => {
+browser.runtime.onConnect.addListener(async (content) => {
+    await ensureVersion();
+
     const native = browser.runtime.connectNative(NATIVE_ID);
 
     native.onMessage.addListener(message => {
