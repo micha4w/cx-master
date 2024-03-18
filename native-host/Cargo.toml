@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.80"
 chrome_native_messaging = "0.3.0"
-chrono = "0.4.35"
+dotlock = "0.5.0"
 futures-util = "0.3.28"
 jsonrpc = "0.14.0"
 reqwest = "0.11.26"

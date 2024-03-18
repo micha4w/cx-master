@@ -1,7 +1,7 @@
-use std::{panic, path::Path, sync::Arc};
+use core::time::Duration;
+use std::{io::ErrorKind, panic, path::Path, sync::Arc};
 
 use anyhow::anyhow;
-use chrono::{DateTime, Utc};
 use serde_json::{json, Value};
 use std::str;
 use tokio::{
@@ -244,6 +244,29 @@ fn list_lsps() -> anyhow::Result<()> {
 }
 
 async fn update(version: &str) -> anyhow::Result<()> {
+    let _lock = dotlock::DotlockOptions::new()
+        .tries(1)
+        .stale_age(Duration::from_secs(60))
+        .create(".update-lock");
+
+    let mut is_updating = false;
+    if let Err(err) = _lock {
+        if err.kind() == ErrorKind::TimedOut {
+            // Another process is already updating the executable
+            is_updating = true;
+        } else {
+            return Err(err.into())
+        }
+    }
+
+    let should_update = std::option_env!("CX_VERSION")
+        .map(|ver| ver.trim_start_matches('v') != version)
+        .unwrap_or(false);
+
+    send!({ "type": "ensure-version", "updating": is_updating || should_update })?;
+    if is_updating || !should_update {
+        return Ok(())
+    }
 
     let release = self_update::backends::github::ReleaseList::configure()
         .repo_owner("micha4w")
@@ -251,8 +274,8 @@ async fn update(version: &str) -> anyhow::Result<()> {
         .build()?
         .fetch()?
         .into_iter()
-        .find(|rel| rel.version == version.trim_start_matches('v'))
-        .ok_or(anyhow!("Failed to find the Github Release to update to"))?;
+        .find(|rel| rel.version == version)
+        .ok_or(anyhow!("Failed to find the GitHub Release to update to"))?;
 
     let os_string = std::option_env!("CX_OS_STRING")
         .ok_or(anyhow!("Executable was built without the correct Environment Variables"))?;
@@ -293,44 +316,12 @@ async fn main() {
         let start = read_browser_message(tokio::io::stdin()).await?;
         match start["type"].as_str() {
             Some("ensure-version") => {
-                let update_lock = std::path::Path::new(".update-lock");
-                let is_updating;
-                if update_lock.exists() {
-                    let update_time: DateTime<Utc> = std::fs::read_to_string(update_lock)?.parse()?;
-                    if chrono::Utc::now() - update_time > chrono::TimeDelta::try_minutes(1).unwrap() {
-                        // Probably the update failed
-                        is_updating = false;
-                        std::fs::remove_file(update_lock)?;
-                    } else {
-                        is_updating = true;
-                    }
-                } else {
-                    is_updating = false;
-                }
+                let version = start["version"]
+                    .as_str()
+                    .ok_or(anyhow!("Ensure version command doesn't include version"))?
+                    .trim_start_matches('v');
 
-                if !is_updating {
-                    let version = start["version"]
-                        .as_str()
-                        .ok_or(anyhow!("Ensure version command doesn't include version"))?
-                        .trim_start_matches('v');
-
-                    let should_update = std::option_env!("CX_VERSION")
-                        .map(|ver| ver != version.trim_start_matches('v'))
-                        .unwrap_or(false);
-
-                    send!({ "type": "ensure-version", "updating": should_update })?;
-                    if should_update {
-                        std::fs::write(update_lock, format!("{}", chrono::Utc::now()))?;
-
-                        update(version).await?;
-
-                        std::fs::remove_file(update_lock)?;
-                    }
-                } else {
-                    send!({ "type": "ensure-version", "updating": is_updating })?;
-                }
-
-                Ok(())
+                update(version).await
             },
             Some("start") => {
                 let lsp_entry = start["id"]
