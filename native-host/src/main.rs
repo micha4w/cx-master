@@ -1,5 +1,4 @@
-use core::time::Duration;
-use std::{io::ErrorKind, panic, path::Path, sync::Arc};
+use std::{io::Write, panic, path::Path, sync::Arc};
 
 use anyhow::anyhow;
 use serde_json::{json, Value};
@@ -7,7 +6,7 @@ use std::str;
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead, AsyncReadExt, AsyncWriteExt, BufReader},
     process::{ChildStdin, Command},
-    sync::Mutex, time,
+    sync::Mutex,
 };
 
 use chrome_native_messaging::send;
@@ -154,15 +153,21 @@ async fn run_lsp(entry: &String) -> anyhow::Result<()> {
     let path = "lsps/".to_owned() + entry + ".json";
     let config_path = std::path::Path::new(&path);
 
-    let config_str = std::fs::read_to_string(config_path)
-        .map_err(|e| anyhow!("Failed to read lsp config file {}: {}", config_path.display(), e.to_string()))?;
+    let config_str = std::fs::read_to_string(config_path).map_err(|e| {
+        anyhow!(
+            "Failed to read lsp config file {}: {}",
+            config_path.display(),
+            e.to_string()
+        )
+    })?;
     let config = serde_json::from_str::<LSP>(&config_str)?;
 
     // send!({ "type": "log", "data": "Read config file" })?;
     let temp = Arc::new(tempfile::tempdir()?);
     // send!({ "type": "log", "data": "Created temp dir" })?;
 
-    let lsp = Arc::new(Mutex::new(Command::new(&config.command)
+    let lsp = Arc::new(Mutex::new(
+        Command::new(&config.command)
             .args(config.args.unwrap_or(Vec::new()))
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
@@ -172,7 +177,13 @@ async fn run_lsp(entry: &String) -> anyhow::Result<()> {
             // )
             .current_dir(temp.path())
             .spawn()
-            .map_err(|e| anyhow!("Failed to start '{}' process: {}", &config.command, e.to_string()))?
+            .map_err(|e| {
+                anyhow!(
+                    "Failed to start '{}' process: {}",
+                    &config.command,
+                    e.to_string()
+                )
+            })?,
     ));
     // send!({ "type": "log", "data": "Created Command" })?;
 
@@ -243,76 +254,111 @@ fn list_lsps() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn update(version: &str) -> anyhow::Result<()> {
-    let _lock = dotlock::DotlockOptions::new()
-        .tries(1)
-        .stale_age(Duration::from_secs(60))
-        .create(".update-lock");
+fn create_file_lock() -> anyhow::Result<Option<&'static str>> {
+    let path = ".update-lock";
 
-    let mut is_updating = false;
-    if let Err(err) = _lock {
-        if err.kind() == ErrorKind::TimedOut {
-            // Another process is already updating the executable
-            is_updating = true;
-        } else {
-            return Err(err.into())
+    let mut i = 0;
+    loop {
+        i += 1;
+        if i > 2 {
+            return Err(anyhow!("Failed to create Lock File"));
+        }
+
+        let lock = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path);
+        match lock {
+            Err(err) => {
+                if err.kind() == std::io::ErrorKind::AlreadyExists {
+                    let time: chrono::DateTime<chrono::Utc> =
+                        std::fs::read_to_string(&path)?.parse()?;
+                    if chrono::Utc::now() - time > chrono::Duration::try_minutes(2).unwrap() {
+                        std::fs::remove_file(&path)?;
+                        continue;
+                    } else {
+                        return Ok(None);
+                    }
+                }
+
+                return Err(err.into());
+            }
+            Ok(file) => {
+                write!(&file, "{}", chrono::Utc::now())?;
+                return Ok(Some(path));
+            }
         }
     }
+}
+async fn ensure_version(version: String) -> anyhow::Result<()> {
+    let lock = create_file_lock()?;
 
+    // Whether another process is already running an update
+    let is_updating = lock.is_none();
     let should_update = std::option_env!("CX_VERSION")
         .map(|ver| ver.trim_start_matches('v') != version)
         .unwrap_or(false);
 
     send!({ "type": "ensure-version", "updating": is_updating || should_update })?;
     if is_updating || !should_update {
-        return Ok(())
+        return Ok(());
     }
 
-    let release = self_update::backends::github::ReleaseList::configure()
-        .repo_owner("micha4w")
-        .repo_name("cx-master")
-        .build()?
-        .fetch()?
-        .into_iter()
-        .find(|rel| rel.version == version)
-        .ok_or(anyhow!("Failed to find the GitHub Release to update to"))?;
+    let release = tokio::task::spawn_blocking(move || {
+        self_update::backends::github::ReleaseList::configure()
+            .repo_owner("micha4w")
+            .repo_name("cx-master")
+            .build()?
+            .fetch()?
+            .into_iter()
+            .find(|rel| rel.version == version)
+            .ok_or(anyhow!("Failed to find the GitHub Release to update to"))
+    }).await??;
 
-    let os_string = std::option_env!("CX_OS_STRING")
-        .ok_or(anyhow!("Executable was built without the correct Environment Variables"))?;
+    let os_string = std::option_env!("CX_OS_STRING").ok_or(anyhow!(
+        "Executable was built without the correct Environment Variables"
+    ))?;
 
-    let asset = release.assets.iter()
+    let asset = release
+        .assets
+        .iter()
         .find(|asset| asset.name.contains(os_string))
-        .ok_or(anyhow!("Failed to find the correct Binary"))?;
+        .ok_or(anyhow!("Failed to find the correct Binary"))?
+        .clone();
 
     let tmp_dir = tempfile::Builder::new()
         .prefix("self_update")
-        .tempdir_in(::std::env::current_dir()?)?;
+        .tempdir_in(std::env::current_dir()?)?;
 
-    time::sleep(time::Duration::from_secs(5)).await;
-    let tmp_tarball_path = tmp_dir.path().join(&asset.name);
-    let tmp_tarball = ::std::fs::File::create(&tmp_tarball_path)?;
+    let bin_path = tmp_dir.path().join(&asset.name);
+    let bin = std::fs::File::create(&bin_path)?;
 
-    self_update::Download::from_url(&asset.download_url)
-        .set_header(reqwest::header::ACCEPT, "application/octet-stream".parse()?)
-        .download_to(&tmp_tarball)?;
+    tokio::task::spawn_blocking::<_, anyhow::Result<()>>(move || {
+        self_update::Download::from_url(&asset.download_url)
+            .set_header(reqwest::header::ACCEPT, "application/octet-stream".parse()?)
+            .download_to(&bin)?;
+        Ok(())
+    }).await??;
 
-    let bin_name = std::path::PathBuf::from("self_update_bin");
-    self_update::Extract::from_source(&tmp_tarball_path)
-        // .archive(self_update::ArchiveKind::Tar(Some(self_update::Compression::Gz)))
-        .extract_file(&tmp_dir.path(), &bin_name)?;
-
-    let new_exe = tmp_dir.path().join(bin_name);
-    self_replace::self_replace(new_exe)?;
-
+    self_replace::self_replace(bin_path)?;
+    std::fs::remove_file(lock.unwrap())?;
+    
     Ok(())
 }
 
 #[tokio::main]
 async fn main() {
+    if std::env::args().any(|arg| arg == "--version") {
+        match std::option_env!("CX_VERSION") {
+            Some(ver) => println!("{}", ver),
+            None => println!("Compiled without a version"),
+        }
+        return;
+    }
+
     panic::set_hook(Box::new(handle_panic));
 
     let result: anyhow::Result<()> = (async {
-
         let start = read_browser_message(tokio::io::stdin()).await?;
         match start["type"].as_str() {
             Some("ensure-version") => {
@@ -321,8 +367,8 @@ async fn main() {
                     .ok_or(anyhow!("Ensure version command doesn't include version"))?
                     .trim_start_matches('v');
 
-                update(version).await
-            },
+                ensure_version(version.to_owned()).await
+            }
             Some("start") => {
                 let lsp_entry = start["id"]
                     .as_str()
