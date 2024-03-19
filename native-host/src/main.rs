@@ -291,16 +291,19 @@ fn create_file_lock() -> anyhow::Result<Option<&'static str>> {
     }
 }
 async fn ensure_version(version: String) -> anyhow::Result<()> {
-    let lock = create_file_lock()?;
-
-    // Whether another process is already running an update
-    let is_updating = lock.is_none();
     let should_update = std::option_env!("CX_VERSION")
         .map(|ver| ver.trim_start_matches('v') != version)
         .unwrap_or(false);
 
-    send!({ "type": "ensure-version", "updating": is_updating || should_update })?;
-    if is_updating || !should_update {
+    if !should_update {
+        send!({ "type": "ensure-version", "status": "already-updated" })?;
+        return Ok(());
+    }
+
+    let lock = create_file_lock()?;
+    let already_updating = lock.is_none();
+    if already_updating {
+        send!({ "type": "ensure-version", "status": "already-updating" })?;
         return Ok(());
     }
 
@@ -343,6 +346,7 @@ async fn ensure_version(version: String) -> anyhow::Result<()> {
     self_replace::self_replace(bin_path)?;
     std::fs::remove_file(lock.unwrap())?;
     
+    send!({ "type": "ensure-version", "status": "updated" })?;
     Ok(())
 }
 
