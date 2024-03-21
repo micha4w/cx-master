@@ -20,8 +20,8 @@ MANIFEST='{
 
 echo "Creating Manifests..."
 for LOCATION in "${MANIFEST_LOCATIONS[@]}" ; do
-  mkdir -p "$MANIFEST_LOCATION"
-  echo "$MANIFEST" > "$MANIFEST_LOCATION/$NATIVE_NAME.json"
+  mkdir -p "$LOCATION"
+  echo "$MANIFEST" > "$LOCATION/$NATIVE_NAME.json"
 done
 
 echo "Downloading Executable..."

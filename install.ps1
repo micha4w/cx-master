@@ -4,9 +4,9 @@ $REPO = "micha4w/cx-master"
 $DOWNLOAD = "v1.2.3/cx-lsp-controller-x86_64-pc-windows-msvc.exe"
 
 $MANIFEST = '{
-  "name": "'"$NATIVE_NAME"'",
+  "name": "' + $NATIVE_NAME + '",
   "description": "Bridge to connect Code Expert with local LSPs Servers",
-  "path": "'"$Env:APPDATA"'/cx-master/cx-lsp-controller",
+  "path": "' + $Env:APPDATA + '/cx-master/cx-lsp-controller",
   "type": "stdio",
   "allowed_extensions": ["cx-master@micha4w.ch"],
   "allowed_origins": ["chrome-extension://fdmghidnemaceleocaolmgdkpegkhlcf"]
