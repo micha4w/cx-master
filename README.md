@@ -9,25 +9,11 @@ All the web Extension code is currently inside the `extension/` directory.
 Code Expert uses `ace-builds` version 1.22.0 and `xterm` version `5.3.0` so when updating the package.json, make sure to keep these versions the same.
 
 ### Installing
-> [!NOTE]
-> This extension won't be available on Browsers addon sites, because:
-> - `addons.mozilla.org`: Stupid verification proccess which I probably wont pass, because the testers can't test the addon without credentials. Plus I couldn't even get the addon far enough to get tested
-> - `chromewebstore.google.com`: You need to pay 5$ to submit addons, can't endorse that
-
-
 #### Firefox
-Go to [Releases](https://github.com/micha4w/cx-master/releases) page and download the latest `.xpi` file, it should install and update automagically.
+[Mozilla Addons](https://addons.mozilla.org/en-US/firefox/addon/code-expert-master/)
 
 #### Chromium-Based Browsers
-1. Go to [Releases](https://github.com/micha4w/cx-master/releases) page and download the latest `.zip`, then unpack it somewhere safe (If you delete the folder, the extension will uninstall)
-2. Open [`chrome://extensions`](chrome://extensions) in your browser, flick the `Developer Mode` Switch (probably at the top right)
-3. Click `Load unpacked` and choose the folder you just unpacked
-4. Profit! *You can now undo Developer Mode if you want to*
-
-> [!NOTE]
-> Chromium won't automatically update the addon, because it wants my money,
-> so if you wan't to keep up to date, Watch this repo and reinstall the addon when new versions come out
-
+[Chrome WebStore](https://chromewebstore.google.com/detail/code-expert-master/fdmghidnemaceleocaolmgdkpegkhlcf)
 
 ### Building
 Requires npm
@@ -43,38 +29,49 @@ The generated Code will be in `dist/` and the packaged Zip will be in `out/`.
 
 
 ## cx-lsp
-This Extension can run a clangd LSP natively on the PC and then connect to it via the Background Script.
+This Extension can connect to a Natively running LSP Server, but you need to have an Application installed.
 
 ### Native application
-Checkout the Mozilla / Google documentation to see how you do it on non Linux.
-
-**Firefox:**
-Create `~/.mozilla/native-messaging-hosts/ch.micha4w.cx_lsp.json` with following content.
-```json
-{
-  "name": "ch.micha4w.cx_lsp",
-  "description": "Bridge to connect Code Expert with a local C++ LSP",
-  "path": "${HOME}/.local/share/cx-lsp-controller",
-  "type": "stdio",
-  "allowed_extensions": ["cx-master@micha4w.ch"]
-}
+#### Automatic
+**Windows:**
+```ps1
+Invoke-Expression ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/micha4w/cx-master/main/install.ps1"))
 ```
-Make sure to replace `${HOME}` with your home directory!
 
-**Chromium:**
-Create `/etc/chromium/native-messaging-hosts//ch.micha4w.cx_lsp.json` with following content.
-```json
-{
-  "name": "ch.micha4w.cx_lsp",
-  "description": "Bridge to connect Code Expert with a local C++ LSP",
-  "path": "${HOME}/.local/share/cx-lsp-controller",
-  "type": "stdio",
-  "allowed_origins": ["chrome-extension://gcpaldhacgepnpnmflkphcjofcdibpbh/"]
-}
+**Linux:**
+```sh
+bash <(curl -sS "https://raw.githubusercontent.com/micha4w/cx-master/main/install.sh")
 ```
-Make sure to replace `${HOME}` with your home directory!
 
-You'll also need to install clangd and download the lsp-controller from Releases and put it into the path specified in the json file you just created.
+### LSP Servers
+You need to have the LSP servers that you want to use on CodeExpert installed on your PC.
+For example to use the C++ Language Server (ClangD) you have to install it using:
+```ps1
+# Windows
+winget install LLVM.LLVM
+# Debian / Ubuntu
+sudo apt-get install clangd-12
+```
+More systems [here](https://clangd.llvm.org/installation.html)
+
+For the Python LSP (PyRight):
+```ps1
+pip install pyright
+# The libraries you want to use in CX need to be installed on your system
+pip install numpy matplotlib
+```
+
+#### Adding your own LSP Servers
+If another language is added to CX, or you don't like the default LSPs, you can add your own by creating config files in `%APPDATA%\cx-master\lsps` on windows or `$XDG_DATA_DIR\cx-master\lsps` on linux. Check out the files that are already in the directory to see how it works.
+
+To get the needed mode, open CX at the file you want to add an LSP for and run
+```js
+ace.edit('ace-editor').session.getMode().$id;
+```
+in the browser console, then take out the last part of the path (e.g. ace/mode/c_cpp -> c_cpp)
+
+
+
 
 ### Building clangd to WASM
 This Chapter is just an info, I tried to get clangd working as a WASM WebWorker, but it ended up not working well, if you would love to try around yourself, here's the build that I ended up with:
