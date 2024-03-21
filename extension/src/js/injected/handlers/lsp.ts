@@ -37,10 +37,9 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
 
             const lspReady = new Promise<string>(res => onMessage('lsp-directory', res, true));
 
-            onMessage('lsp-response', this.cachedBind(this.onLSPMessage));
-            onMessage('lsp-error', (message) => { throw new Error(message); });
             sendMessage('lsp-start', cx_data.settings.lsp!.id);
             this.directory = await lspReady;
+            if (!cx_data.settings.lsp) return;
 
             const createFile = async (file: FileNode) => {
                 if (file.isLeaf) {
@@ -55,19 +54,13 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
                     );
                     sendMessage('lsp-file', { path: file.path, content });
                 } else {
-                    for (const child of file.children) {
-                        await createFile(child);
-                    }
+                    await Promise.all(file.children.map(createFile));
                 }
             }
 
             await createFile(this.root);
+            if (!cx_data.settings.lsp) return;
 
-            this.fakeWorker = {
-                postMessage: this.onAceMessage.bind(this),
-                addEventListener: () => { },
-                onmessage: undefined,
-            };
             cx_data.lsp = AceLanguageClient.for({
                 // module: () => LanguageClient,
                 module: () => import("ace-linters/build/language-client"),
@@ -78,7 +71,6 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
         }
 
         cx_data.lsp.registerEditor(cx_data.editor);
-
 
         // Because cx does editor.createSession and then editor.setMode, so the mode is not set correctly
         cx_data.editor!.on('changeSession', ({ oldSession, session }) => {
@@ -95,6 +87,17 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
             }
             cx_data.editor!.on('changeMode', $changeMode)
         });
+    }
+
+    async onLoad() {
+        onMessage('lsp-response', this.cachedBind(this.onLSPMessage));
+        onMessage('lsp-error', (message) => { throw new Error(message); });
+
+        this.fakeWorker = {
+            postMessage: this.onAceMessage.bind(this),
+            addEventListener: () => { },
+            onmessage: undefined,
+        };
     }
 
     async onLoadEditor() {
@@ -126,8 +129,6 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
 
 
     onAceMessage(message: LSP.RequestMessage) {
-        // console.log('request', message)
-
         if (message.method === 'initialize') {
             const params = message.params as LSP.InitializeParams;
             params.rootUri = 'file://' + this.directory;
@@ -160,7 +161,6 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
             (message.params as PublishDiagnosticsParams).uri = cx_data.editor.session.id + '.' + cx_data.settings.lsp.mode;
         }
 
-        this.fakeWorker.onmessage({ data: message });
-        // console.log('response', JSON.parse(message));
+        this.fakeWorker.onmessage?.({ data: message });
     }
 }

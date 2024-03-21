@@ -7,6 +7,7 @@ import { onMessage, sendMessage, cx_data } from '~/lib/Utils';
 let handlers: ISettingsHandler[] = [];
 
 function editorLoaded() {
+    if (CX_DEBUG) console.log('CX: Editor reloaded');
     cx_data.editor = ace.edit('ace-editor');
     for (const handler of handlers) {
         handler.onLoadEditor?.();
@@ -60,6 +61,8 @@ onMessage('init', async (settings, root) => {
 
     if (document.querySelector('#ace-editor')) editorLoaded();
     document.addEventListener("cxAceMounted", editorLoaded, { capture: true });
+
+    if (CX_DEBUG) console.log('CX: Successfully injected script');
 });
 
 onMessage('settings', async (settings) => {
@@ -79,6 +82,8 @@ onMessage('unload', async () => {
     }
 
     handlers = [];
+
+    if (CX_DEBUG) console.log('CX: Successfully unloaded script');
 });
 
 sendMessage('ready');

@@ -26,7 +26,7 @@ const injectURL = browser.runtime.getURL(inject);
     await browser.storage.sync.set({ 'settings': settings });
     await scriptReady;
 
-    let background: browser.Runtime.Port
+    let background: browser.Runtime.Port | undefined;
     onMessage('lsp-start', (id) => {
         background = browser.runtime.connect();
         background.onMessage.addListener(message => {
@@ -35,14 +35,15 @@ const injectURL = browser.runtime.getURL(inject);
         background.postMessage({ type: 'start', id })
     });
     onMessage('lsp-stop', () => {
-        background.postMessage({ type: 'stop' });
-        background.disconnect();
+        background?.postMessage({ type: 'stop' });
+        background?.disconnect();
+        background = undefined;
     });
     onMessage('lsp-request', (message) => {
-        background.postMessage({ type: 'request', message });
+        background?.postMessage({ type: 'request', message });
     });
     onMessage('lsp-file', ({ path, content }) => {
-        background.postMessage({ type: 'file', path, content });
+        background?.postMessage({ type: 'file', path, content });
     });
 
     browser.storage.sync.onChanged.addListener((changed) => {

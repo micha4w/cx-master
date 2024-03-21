@@ -4,24 +4,32 @@ import pkg from "~/../package.json"
 const NATIVE_ID = 'ch.micha4w.cx_lsp';
 let is_up_to_date = false;
 
-
 async function ensureVersion() {
+    if (CX_DEBUG) console.log('ensureVersion::is_up_to_date:', is_up_to_date)
     if (is_up_to_date) return
     
+    if (CX_DEBUG) console.log('ensureVersion: trying to update to version', pkg.version)
     while (true) {
-        const clangd = browser.runtime.connectNative(NATIVE_ID);
-
-        const responsePromise = new Promise<any>(res => clangd.onMessage.addListener(res));
-        clangd.postMessage({ type: "ensure-version", version: pkg.version });
-        const { updating } = await responsePromise;
-
-        if (!updating) {
-            is_up_to_date = true;
-            return;
+        const response = await browser.runtime.sendNativeMessage(NATIVE_ID, {
+            type: "ensure-version",
+            version: pkg.version,
+        });
+        if (response.type !== 'ensure-version') {
+            throw new Error(response);
         }
+        const status = response.status as "updated" | "already-updated" | "already-updating";
 
-        await new Promise((res) => clangd.onDisconnect.addListener(res));
-        await new Promise((res) => setTimeout(res, 5000));
+        if (CX_DEBUG) console.log('ensureVersion::reponse:', response)
+
+        switch (status) {
+            case "already-updated":
+            case "updated":
+                is_up_to_date = true;
+                return;
+            case "already-updating":
+                await new Promise((res) => setTimeout(res, 5000));
+                break;
+        }
     }
 }
 
@@ -32,7 +40,14 @@ browser.tabs.onUpdated.addListener((tabId, info, tab) => {
 
 browser.runtime.onMessage.addListener(async (message) => {
     await ensureVersion();
-    return browser.runtime.sendNativeMessage(NATIVE_ID, message);
+
+    if (CX_DEBUG) console.log("single_message::message:", message)
+    const response = await browser.runtime.sendNativeMessage(NATIVE_ID, message);
+    if (CX_DEBUG) console.log("single_message::response:", response)
+    if (response.type === 'error')
+        throw new Error(response.data);
+
+    return response;
 });
 
 browser.runtime.onConnect.addListener(async (content) => {
@@ -45,8 +60,8 @@ browser.runtime.onConnect.addListener(async (content) => {
             console.error(message);
         } else if (message.type === 'warning') {
             console.warn(message);
-        } else {
-            // console.info(message);
+        } else if (CX_DEBUG) {
+            console.log("LSP:", message);
         }
 
         content.postMessage(message);
@@ -54,13 +69,13 @@ browser.runtime.onConnect.addListener(async (content) => {
 
 
     content.onMessage.addListener(message => {
-        // console.log(message);
+        if (CX_DEBUG) console.log("ACE:", message);
         native.postMessage(message);
     });
 
     content.onDisconnect.addListener(() => {
         native.disconnect();
-        // console.log("Disconnected1");
+        if (CX_DEBUG) console.log("Connection closed by ACE");
     })
 
     native.onDisconnect.addListener(() => {
@@ -70,6 +85,6 @@ browser.runtime.onConnect.addListener(async (content) => {
         }
             
         content.disconnect();
-        // console.log("Disconnected2");
+        if (CX_DEBUG) console.log("Connection closed by LSP");
     });
 });
