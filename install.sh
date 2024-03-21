@@ -15,7 +15,7 @@ MANIFEST='{
   "path": "'"$DATA_LOCATION"'/cx-lsp-controller",
   "type": "stdio",
   "allowed_extensions": ["cx-master@micha4w.ch"],
-  "allowed_origins": ["chrome-extension://fdmghidnemaceleocaolmgdkpegkhlcf"]
+  "allowed_origins": ["chrome-extension://fdmghidnemaceleocaolmgdkpegkhlcf/"]
 }'
 
 echo "Creating Manifests..."
