@@ -35,7 +35,7 @@ This Extension can connect to a Natively running LSP Server, but you need to hav
 #### Automatic
 **Windows:**
 ```ps1
-Invoke-Expression ((New-Object System.Net.WebClient).DownloadString("https://raw.githubusercontent.com/micha4w/cx-master/main/install.ps1"))
+Invoke-WebRequest "https://raw.githubusercontent.com/micha4w/cx-master/main/install.ps1" | Invoke-Expression
 ```
 
 **Linux:**
