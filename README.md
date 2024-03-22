@@ -48,7 +48,7 @@ You need to have the LSP servers that you want to use on CodeExpert installed on
 For example to use the C++ Language Server (ClangD) you have to install it using:
 ```ps1
 # Windows
-winget install LLVM.LLVM
+winget install LLVM.clangd
 # Debian / Ubuntu
 sudo apt-get install clangd-12
 ```
@@ -58,7 +58,7 @@ For the Python LSP (PyRight):
 ```ps1
 pip install pyright
 # The libraries you want to use in CX need to be installed on your system
-pip install numpy matplotlib
+pip install numpy matplotlib scipy
 ```
 
 #### Adding your own LSP Servers
