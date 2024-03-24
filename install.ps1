@@ -4,13 +4,21 @@ $NATIVE_NAME = "ch.micha4w.cx_lsp"
 $REPO = "micha4w/cx-master"
 $DOWNLOAD = "v1.2.3/cx-lsp-controller-x86_64-pc-windows-msvc.exe"
 
-$MANIFEST = '{
+# TODO 
+$MANIFEST_CHROME = '{
+  "name": "' + $NATIVE_NAME + '",
+  "description": "Bridge to connect Code Expert with local LSPs Servers",
+  "path": ' + (ConvertTo-Json ($Env:APPDATA + "\cx-master\cx-lsp-controller.exe")) + ',
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://fdmghidnemaceleocaolmgdkpegkhlcf/"]
+}'
+
+$MANIFEST_FIREFOX = '{
   "name": "' + $NATIVE_NAME + '",
   "description": "Bridge to connect Code Expert with local LSPs Servers",
   "path": ' + (ConvertTo-Json ($Env:APPDATA + "\cx-master\cx-lsp-controller.exe")) + ',
   "type": "stdio",
   "allowed_extensions": ["cx-master@micha4w.ch"],
-  "allowed_origins": ["chrome-extension://fdmghidnemaceleocaolmgdkpegkhlcf/"]
 }'
 
 $MANIFEST_LOCATIONS = @(

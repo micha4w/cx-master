@@ -100,7 +100,8 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
                         meteorSocket?.removeEventListener('message', this.cachedBind(this.handleMeteorResponse));
                         this.compilerAnnotations.clear();
                         cx_data.editor?.session.clearAnnotations();
-                        this.annotatedFiles.delete(getCurrentFile());
+                        const file = getCurrentFile();
+                        if (file) this.annotatedFiles.delete(file);
                     }
                 );
             }

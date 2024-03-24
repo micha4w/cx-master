@@ -18,6 +18,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
     root!: FileNode;
     directory!: string;
     fakeWorker!: { addEventListener: any, onmessage: any, postMessage: any };
+    fileName!: string;
 
     async setupLSP() {
         if (!cx_data.lsp) {
@@ -38,7 +39,10 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
             const lspReady = new Promise<string>(res => onMessage('lsp-directory', res, true));
 
             sendMessage('lsp-start', cx_data.settings.lsp!.id);
-            this.directory = await lspReady;
+            this.directory = (await lspReady).replaceAll('\\', '/');
+            if (!this.directory.startsWith('/'))
+                this.directory = '/' + this.directory;
+
             if (!cx_data.settings.lsp) return;
 
             const createFile = async (file: FileNode) => {
@@ -62,7 +66,6 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
             if (!cx_data.settings.lsp) return;
 
             cx_data.lsp = AceLanguageClient.for({
-                // module: () => LanguageClient,
                 module: () => import("ace-linters/build/language-client"),
                 modes: cx_data.settings.lsp!.mode,
                 type: "webworker",
@@ -71,22 +74,10 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
         }
 
         cx_data.lsp.registerEditor(cx_data.editor);
+        // @ts-ignore
+        this.fileName = cx_data.editor!.session.id + '.' + cx_data.editor!.session.getMode().$id.replace('ace/mode/', '');
 
-        // Because cx does editor.createSession and then editor.setMode, so the mode is not set correctly
-        cx_data.editor!.on('changeSession', ({ oldSession, session }) => {
-            cx_data.lsp?.closeDocument(oldSession);
-
-            cx_data.editor?.session.doc
-            function $changeMode(...a : any[]) {
-                // @ts-ignore
-                // cx_data.lsp.$sessionLanguageProviders[cx_data.editor.session.id]?.$changeMode()
-                cx_data.lsp?.closeDocument(session);
-                cx_data.lsp?.registerEditor(cx_data.editor);
-
-                cx_data.editor!.off('changeMode', $changeMode);
-            }
-            cx_data.editor!.on('changeMode', $changeMode)
-        });
+        cx_data.editor!.on('changeSession', this.cachedBind(this.onSessionChange));
     }
 
     async onLoad() {
@@ -110,7 +101,15 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
         if (cx_data.settings.lsp?.id !== oldSettings.lsp?.id) {
             if (cx_data.lsp) {
                 sendMessage('lsp-stop');
-                cx_data.lsp.dispose();
+                // TODO unload the editor
+                if (cx_data.editor) {
+                    cx_data.editor.off('changeSession', this.cachedBind(this.onSessionChange));
+                    Object.values((cx_data.lsp as any).$sessionLanguageProviders).map((provider : any) => {
+                        provider.session.doc.off("change", provider.$changeListener);
+                        cx_data.lsp!.closeDocument(provider.session);
+                    });
+                }
+                cx_data.lsp.dispose()
                 cx_data.lsp = undefined;
             }
 
@@ -122,11 +121,21 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
     onUnload() {
         if (cx_data.lsp) {
             sendMessage('lsp-stop');
+            if (cx_data.editor) {
+                cx_data.editor.off('changeSession', this.cachedBind(this.onSessionChange));
+                cx_data.lsp.closeDocument(cx_data.editor.session);
+            }
             cx_data.lsp.dispose();
             cx_data.lsp = undefined;
         }
     }
 
+
+    onSessionChange({ oldSession, session } : { oldSession : AceAjax.IEditSession , session: AceAjax.IEditSession }) {
+        // cx_data.lsp?.closeDocument(oldSession);
+        // @ts-ignore
+        this.fileName = session.id + '.' + session.getMode().$id.replace('ace/mode/', '');
+    }
 
     onAceMessage(message: LSP.RequestMessage) {
         if (message.method === 'initialize') {
@@ -158,7 +167,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
 
         if (message.method === 'textDocument/publishDiagnostics') {
             // @ts-ignore
-            (message.params as PublishDiagnosticsParams).uri = cx_data.editor.session.id + '.' + cx_data.settings.lsp.mode;
+            (message.params as PublishDiagnosticsParams).uri = this.fileName;
         }
 
         this.fakeWorker.onmessage?.({ data: message });

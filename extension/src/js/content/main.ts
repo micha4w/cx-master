@@ -47,6 +47,7 @@ const injectURL = browser.runtime.getURL(inject);
     });
 
     browser.storage.sync.onChanged.addListener((changed) => {
+        settings = changed.settings.newValue;
         if (loaded && changed.settings?.newValue) {
             sendMessage('settings', changed.settings.newValue);
         }

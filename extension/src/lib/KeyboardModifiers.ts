@@ -6,7 +6,7 @@ export enum KeyboardModifiers {
     Fn = 1 << 3,
     Hyper = 1 << 4,
     Meta = 1 << 5,
-    NumLock = 1 << 6,
+    // NumLock = 1 << 6,
     OS = 1 << 7,
     Super = 1 << 8,
     Shift = 1 << 9,

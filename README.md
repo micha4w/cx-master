@@ -3,6 +3,7 @@ This extension adds cool stuff like a nice switch between Vim, VSCode and Ace ke
 
 <img alt='settings' src='res/settings.png' width='400'>
 
+// TODO make different manifest for firefox
 
 ## Extension
 All the web Extension code is currently inside the `extension/` directory.
