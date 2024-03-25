@@ -8,7 +8,7 @@
 
     let settings: Settings;
     $: browser.storage.sync.set({ settings });
-    const settingsPromise = (async () => {
+            const settingsPromise = (async () => {
         const vals = await browser.storage.sync.get("settings");
         settings = applyDefaultSettings(vals.settings);
     })();
@@ -16,7 +16,7 @@
     const keybinds = getKeyBindingins();
     const lspsPromise = browser.runtime.sendMessage({
         type: "list-lsps",
-    }) as Promise<{ data: LSP[] }>;
+    }) as Promise<{ type: "lsp-entries", data: LSP[] }>;
 </script>
 
 <div class="logo-wrapper">

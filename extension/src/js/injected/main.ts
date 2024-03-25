@@ -14,7 +14,20 @@ function editorLoaded() {
     }
 }
 
-onMessage('init', async (settings, root) => {
+let queue: (() => Promise<void>)[] = [];
+async function appendTask(task: () => Promise<void>) {
+    if (queue.length !== 0) {
+        queue.push(task);
+    } else {
+        queue.push(task);
+        let ran_task;
+        while (ran_task = queue.shift()) {
+            await ran_task();
+        }
+    }
+}
+
+onMessage('init', (settings, root) => appendTask(async () => {
     cx_data.settings = settings;
     cx_data.root = root;
 
@@ -34,7 +47,7 @@ onMessage('init', async (settings, root) => {
     cx_data.containers = {
         left_tabs: container[0],
         left_panel: container[1],
-        
+
         editor_surface: main_container[0],
 
         lower_panel: main_container[1],
@@ -56,34 +69,34 @@ onMessage('init', async (settings, root) => {
     ];
 
     for (const handler of handlers) {
-        handler.onLoad?.();
+        await handler.onLoad?.();
     }
 
     if (document.querySelector('#ace-editor')) editorLoaded();
     document.addEventListener("cxAceMounted", editorLoaded, { capture: true });
 
     if (CX_DEBUG) console.log('CX: Successfully injected script');
-});
+}));
 
-onMessage('settings', async (settings) => {
+onMessage('settings', (settings) => appendTask(async () => {
     const oldSettings = cx_data.settings;
     cx_data.settings = settings;
 
     for (const handler of handlers) {
-        handler.onUpdate?.(oldSettings);
+        await handler.onUpdate?.(oldSettings);
     }
-});
+}));
 
-onMessage('unload', async () => {
+onMessage('unload', () => appendTask(async () => {
     document.removeEventListener("cxAceMounted", editorLoaded, { capture: true });
 
     for (const handler of handlers) {
-        handler.onUnload?.();
+        await handler.onUnload?.();
     }
 
     handlers = [];
 
     if (CX_DEBUG) console.log('CX: Successfully unloaded script');
-});
+}));
 
 sendMessage('ready');

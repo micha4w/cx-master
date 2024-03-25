@@ -124,11 +124,11 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
         }
     }
 
-    onLoad() {
+    async onLoad() {
         this.applySettings((option) => cx_data.settings.options[option].value ? 'activate' : 'removed');
     }
 
-    onLoadEditor() {
+    async onLoadEditor() {
         this.applySettings((option) => {
             if (option === 'parse_errors' && this.annotatedFiles.size > 0)
                 return 'activate';
@@ -137,7 +137,7 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
         }, true);
     }
 
-    onUpdate(oldSettings: Settings) {
+    async onUpdate(oldSettings: Settings) {
         this.applySettings((option) => {
             const oldValue = oldSettings.options[option].value;
             const newValue = cx_data.settings.options[option].value;
@@ -158,7 +158,7 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
         });
     }
 
-    onUnload() {
+    async onUnload() {
         this.applySettings((option) => cx_data.settings.options[option].value ? 'remove' : 'active');
     }
 
@@ -203,7 +203,7 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
                     }])
                 );
                 const file = getCurrentFile();
-                if (this.compilerAnnotations.has(file)) {
+                if (file && this.compilerAnnotations.has(file)) {
                     cx_data.editor!.session.setAnnotations(this.compilerAnnotations.get(file)!);
                     this.annotatedFiles.add(file);
                 }
@@ -218,6 +218,7 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
         setTimeout(() => {
             const file = getCurrentFile();
             session.clearAnnotations();
+            if (!file) return;
 
             // Because CX stores annotations of files
             if (!cx_data.settings.options.parse_errors.value) {
@@ -235,7 +236,7 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
                     this.annotatedFiles.add(file);
                 }
             }
-        }, 100); // To give brace enought time to set its own annotations, which would overwrite ours
+        }, 100); // To give brace enough time to set its own annotations, which would overwrite ours
     }
 
     handleFileTreeBlur(ev: FocusEvent) {

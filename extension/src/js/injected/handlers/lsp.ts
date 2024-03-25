@@ -1,6 +1,7 @@
 import { CachedBind, cx_data, getCurrentFile, onMessage, sendMessage } from '~/lib/Utils';
 import { AceLanguageClient } from "ace-linters/build/ace-language-client";
 import LSP from "vscode-languageserver-protocol/browser"
+import type { LanguageProvider } from 'ace-linters/types/language-provider';
 
 interface FileNode {
     key: string;
@@ -73,7 +74,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
             });
         }
 
-        cx_data.lsp.registerEditor(cx_data.editor);
+        cx_data.lsp.registerEditor(cx_data.editor!);
         // @ts-ignore
         this.fileName = cx_data.editor!.session.id + '.' + cx_data.editor!.session.getMode().$id.replace('ace/mode/', '');
 
@@ -101,13 +102,8 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
         if (cx_data.settings.lsp?.id !== oldSettings.lsp?.id) {
             if (cx_data.lsp) {
                 sendMessage('lsp-stop');
-                // TODO unload the editor
                 if (cx_data.editor) {
                     cx_data.editor.off('changeSession', this.cachedBind(this.onSessionChange));
-                    Object.values((cx_data.lsp as any).$sessionLanguageProviders).map((provider : any) => {
-                        provider.session.doc.off("change", provider.$changeListener);
-                        cx_data.lsp!.closeDocument(provider.session);
-                    });
                 }
                 cx_data.lsp.dispose()
                 cx_data.lsp = undefined;
@@ -118,13 +114,10 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
         }
     }
 
-    onUnload() {
+    async onUnload() {
         if (cx_data.lsp) {
             sendMessage('lsp-stop');
-            if (cx_data.editor) {
-                cx_data.editor.off('changeSession', this.cachedBind(this.onSessionChange));
-                cx_data.lsp.closeDocument(cx_data.editor.session);
-            }
+            cx_data.editor?.off('changeSession', this.cachedBind(this.onSessionChange));
             cx_data.lsp.dispose();
             cx_data.lsp = undefined;
         }

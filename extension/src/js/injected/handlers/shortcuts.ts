@@ -2,7 +2,7 @@ import { parseKeyEvent } from "~/lib/KeyboardModifiers";
 import { CachedBind, cx_data, waitForElm } from "~/lib/Utils";
 
 export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
-    onLoad() {
+    async onLoad() {
         document.body.addEventListener('keydown', this.cachedBind(this.handleKeyDown), true);
     }
 
@@ -11,7 +11,7 @@ export class ShortcutsHandler extends CachedBind implements ISettingsHandler {
         await import('ace-builds/src-min-noconflict/ext-beautify');
     }
 
-    onUnload() {
+    async onUnload() {
         document.body.removeEventListener('keydown', this.cachedBind(this.handleKeyDown), true);
     }
 
