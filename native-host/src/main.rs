@@ -55,7 +55,7 @@ async fn read_lsp_message<R: AsyncBufReadExt + std::marker::Unpin>(
         let header_parts = header.split(": ").collect::<Vec<&str>>();
         // send!({ "type": "log", "header": header_parts })?;
         if header_parts.len() != 2 {
-            return Err(anyhow!("Header sent by LSP is invalid"));
+            return Err(anyhow!("Header sent by LSP is invalid: '".to_owned() + &header + "'"));
         }
 
         if header_parts[0] == "Content-Length" {

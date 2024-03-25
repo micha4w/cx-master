@@ -16,7 +16,7 @@
         height: 32px;
         background: #fff;
         /* animation: lds-facebook 1s cubic-bezier(0, 0.5, 0.5, 1) infinite; */
-        animation: lds-facebook 2s ease-in-out infinite;
+        animation: loader-frames 2s ease-in-out infinite;
     }
     .loader div:nth-child(1) {
         animation-delay: -0.4s;
@@ -27,7 +27,7 @@
     .loader div:nth-child(3) {
         animation-delay: 0;
     }
-    @keyframes lds-facebook {
+    @keyframes loader-frames {
         0%,  100% {
             opacity: 0;
         }

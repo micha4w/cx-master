@@ -34,10 +34,10 @@ declare global {
 	}
 
 	interface ISettingsHandler {
-		onLoad?() : void;
-		onLoadEditor?() : void;
-		onUpdate?(oldSettings : Settings) : void;
-		onUnload?() : void;
+		onLoad?() : Promise<void>;
+		onLoadEditor?() : Promise<void>;
+		onUpdate?(oldSettings : Settings) : Promise<void>;
+		onUnload?() : Promise<void>;
 	}
 }
 

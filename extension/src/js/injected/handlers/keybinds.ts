@@ -1,7 +1,7 @@
 import { cx_data } from '~/lib/Utils';
 
 export class KeybindsHandler implements ISettingsHandler {
-    onLoadEditor() {
+    async onLoadEditor() {
         this.onUpdate({ keybind: 'default' } as Settings);
     }
 
@@ -57,7 +57,7 @@ export class KeybindsHandler implements ISettingsHandler {
         }
     }
 
-    onUnload() {
+    async onUnload() {
         cx_data.editor?.setKeyboardHandler('');
     }
 }
