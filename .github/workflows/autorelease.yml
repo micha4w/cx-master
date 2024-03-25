@@ -67,7 +67,7 @@ jobs:
         working-directory: native-host
         env:
           CX_VERSION: ${{github.ref_name}}
-          CX_OS_STRING: ${{matrix.target.name}}
+          CX_OS_STRING: ${{matrix.target.os_string}}
           RUSTFLAGS: -C target-feature=+crt-static
 
       - run: cp cx-lsp-controller${{matrix.target.extension}} cx-lsp-controller-${{matrix.target.os_string}}${{matrix.target.extension}}
