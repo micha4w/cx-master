@@ -4,7 +4,6 @@ $NATIVE_NAME = "ch.micha4w.cx_lsp"
 $REPO = "micha4w/cx-master"
 $DOWNLOAD = "v1.2.3/cx-lsp-controller-x86_64-pc-windows-msvc.exe"
 
-# TODO 
 $MANIFEST_CHROME = '{
   "name": "' + $NATIVE_NAME + '",
   "description": "Bridge to connect Code Expert with local LSPs Servers",
@@ -21,10 +20,8 @@ $MANIFEST_FIREFOX = '{
   "allowed_extensions": ["cx-master@micha4w.ch"],
 }'
 
-$MANIFEST_LOCATIONS = @(
-  "HKCU:\Software\Google\Chrome\NativeMessagingHosts",
-  "HKCU:\Software\Mozilla\NativeMessagingHosts" 
-)
+$MANIFEST_LOCATION_CHROME="HKCU:\Software\Google\Chrome\NativeMessagingHosts"
+$MANIFEST_LOCATION_FIREFOX="HKCU:\Software\Mozilla\NativeMessagingHosts" 
 
 Write-Host "Downloading Executable..."
 New-Item -ItemType Directory -Path "$Env:APPDATA/cx-master" -Force
@@ -46,10 +43,10 @@ $zip.Entries.Where{ $_.FullName -match "^[^/]*-main/native-host/lsps/." -and $_.
 $zip.Dispose()
 $tmp | Remove-Item
 
-Write-Host "Creating Manifest..."
-New-Item "$Env:APPDATA\cx-master\$NATIVE_NAME.json" -ItemType File -Value $MANIFEST -Force
+Write-Host "Creating Manifests..."
+New-Item "$Env:APPDATA\cx-master\$NATIVE_NAME.chrome.json" -ItemType File -Value $MANIFEST_CHROME -Force
+New-Item "$Env:APPDATA\cx-master\$NATIVE_NAME.firefox.json" -ItemType File -Value $MANIFEST_FIREFOX -Force
 
-Write-Host "Registering Manifest..."
-foreach ($LOCATION in $MANIFEST_LOCATIONS) {
-  New-Item -Path "$LOCATION\$NATIVE_NAME" -Value "$Env:APPDATA\cx-master\$NATIVE_NAME.json" -Force
-}
+Write-Host "Registering Manifests..."
+New-Item -Path "$MANIFEST_LOCATION_CHROME\$NATIVE_NAME" -Value "$Env:APPDATA\cx-master\$NATIVE_NAME.chrome.json" -Force
+New-Item -Path "$MANIFEST_LOCATION_FIREFOX\$NATIVE_NAME" -Value "$Env:APPDATA\cx-master\$NATIVE_NAME.firefox.json" -Force
