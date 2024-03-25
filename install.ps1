@@ -1,4 +1,5 @@
 using namespace System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $NATIVE_NAME = "ch.micha4w.cx_lsp"
 $REPO = "micha4w/cx-master"
@@ -33,7 +34,6 @@ Invoke-WebRequest "https://codeload.github.com/$REPO/zip/main" -OutFile $tmp
 
 Write-Host "Extracting Zip Configs..."
 $zip = [ZipFile]::OpenRead($tmp)
-Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip.Entries.Where{ $_.FullName -match "^[^/]*-main/native-host/lsps/." -and $_.FullName -notmatch "/$" }.ForEach{
   $newFile = [IO.FileInfo]($_.FullName -replace "^[^/]*-main/native-host/", "$Env:APPDATA\cx-master\")
   $newFile.Directory.Create()
