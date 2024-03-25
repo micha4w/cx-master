@@ -3,7 +3,11 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $NATIVE_NAME = "ch.micha4w.cx_lsp"
 $REPO = "micha4w/cx-master"
-$DOWNLOAD = "v1.2.3/cx-lsp-controller-x86_64-pc-windows-msvc.exe"
+$DOWNLOAD = "v1.2.4/cx-lsp-controller-x86_64-pc-windows-msvc.exe"
+
+
+$MANIFEST_LOCATION_CHROME="HKCU:\Software\Google\Chrome\NativeMessagingHosts"
+$MANIFEST_LOCATION_FIREFOX="HKCU:\Software\Mozilla\NativeMessagingHosts" 
 
 $MANIFEST_CHROME = '{
   "name": "' + $NATIVE_NAME + '",
@@ -12,7 +16,6 @@ $MANIFEST_CHROME = '{
   "type": "stdio",
   "allowed_origins": ["chrome-extension://fdmghidnemaceleocaolmgdkpegkhlcf/"]
 }'
-
 $MANIFEST_FIREFOX = '{
   "name": "' + $NATIVE_NAME + '",
   "description": "Bridge to connect Code Expert with local LSPs Servers",
@@ -20,9 +23,6 @@ $MANIFEST_FIREFOX = '{
   "type": "stdio",
   "allowed_extensions": ["cx-master@micha4w.ch"],
 }'
-
-$MANIFEST_LOCATION_CHROME="HKCU:\Software\Google\Chrome\NativeMessagingHosts"
-$MANIFEST_LOCATION_FIREFOX="HKCU:\Software\Mozilla\NativeMessagingHosts" 
 
 Write-Host "Downloading Executable..."
 New-Item -ItemType Directory -Path "$Env:APPDATA/cx-master" -Force

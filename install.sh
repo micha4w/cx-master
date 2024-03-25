@@ -2,11 +2,14 @@
 
 NATIVE_NAME="ch.micha4w.cx_lsp"
 REPO="micha4w/cx-master"
-DOWNLOAD="v1.2.3/cx-lsp-controller-x86_64-unknown-linux-gnu"
+DOWNLOAD="v1.2.4/cx-lsp-controller-x86_64-unknown-linux-gnu"
 DATA_LOCATION="${XDG_DATA_HOME:-$HOME/.local/share}/cx-master"
+
+
 MANIFEST_LOCATION_FIREFOX="$HOME/.mozilla/native-messaging-hosts"
 MANIFEST_LOCATION_CHROMIUM="$HOME/.config/chromium/NativeMessagingHosts"
 MANIFEST_LOCATION_CHROME="$HOME/.config/google-chrome/NativeMessagingHosts"
+
 MANIFEST_FIREFOX='{
   "name": "'"$NATIVE_NAME"'",
   "description": "Bridge to connect Code Expert with local LSPs Servers",
