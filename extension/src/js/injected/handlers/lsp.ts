@@ -19,24 +19,11 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
     root!: FileNode;
     directory!: string;
     fakeWorker!: { addEventListener: any, onmessage: any, postMessage: any };
-    fileName!: string;
+    aceFileName!: string;
+    filePath?: string;
 
     async setupLSP() {
         if (!cx_data.lsp) {
-            this.projectId = new URL(document.URL).pathname.split('/').at(-1)!;
-
-            const files = await new Promise<{ tree: FileNode[] }>((resolve, reject) =>
-                Meteor.connection.call("project_getProjectTree", {
-                    "projectId": this.projectId,
-                    "diffTree": false,
-                    "role": "student"
-                }, (error : Error, result : { tree: FileNode[] }) => {
-                    if (error) reject(error);
-                    else resolve(result);
-                })
-            );
-            this.root = files.tree[0];
-
             const lspReady = new Promise<string>(res => onMessage('lsp-directory', res, true));
 
             sendMessage('lsp-start', cx_data.settings.lsp!.id);
@@ -45,27 +32,45 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
                 this.directory = '/' + this.directory;
 
             if (!cx_data.settings.lsp) return;
+        }
 
-            const createFile = async (file: FileNode) => {
-                if (file.isLeaf) {
-                    const { content } = await new Promise<{ content: string } >((resolve, reject) =>
-                        Meteor.connection.call("editor_getFileContent", {
-                            "projectId": this.projectId,
-                            "fileKey": file.key,
-                        }, (error : Error, result : { content: string } ) => {
-                            if (error) reject(error);
-                            else resolve(result);
-                        })
-                    );
-                    sendMessage('lsp-file', { path: file.path, content });
-                } else {
-                    await Promise.all(file.children.map(createFile));
-                }
+        this.projectId = new URL(document.URL).pathname.split('/').at(-1)!;
+
+        const files = await new Promise<{ tree: FileNode[] }>((resolve, reject) =>
+            Meteor.connection.call("project_getProjectTree", {
+                "projectId": this.projectId,
+                "diffTree": false,
+                "role": "student"
+            }, (error : Error, result : { tree: FileNode[] }) => {
+                if (error) reject(error);
+                else resolve(result);
+            })
+        );
+        this.root = files.tree[0];
+
+        if (!cx_data.settings.lsp) return;
+
+        const createFile = async (file: FileNode) => {
+            if (file.isLeaf) {
+                const { content } = await new Promise<{ content: string } >((resolve, reject) =>
+                    Meteor.connection.call("editor_getFileContent", {
+                        "projectId": this.projectId,
+                        "fileKey": file.key,
+                    }, (error : Error, result : { content: string } ) => {
+                        if (error) reject(error);
+                        else resolve(result);
+                    })
+                );
+                sendMessage('lsp-file', { path: file.path, content });
+            } else {
+                await Promise.all(file.children.map(createFile));
             }
+        }
 
-            await createFile(this.root);
-            if (!cx_data.settings.lsp) return;
+        await createFile(this.root);
+        if (!cx_data.settings.lsp) return;
 
+        if (!cx_data.lsp) {
             cx_data.lsp = AceLanguageClient.for({
                 module: () => import("ace-linters/build/language-client"),
                 modes: cx_data.settings.lsp!.mode,
@@ -76,7 +81,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
 
         cx_data.lsp.registerEditor(cx_data.editor!);
         // @ts-ignore
-        this.fileName = cx_data.editor!.session.id + '.' + cx_data.editor!.session.getMode().$id.replace('ace/mode/', '');
+        this.aceFileName = cx_data.editor!.session.id + '.' + cx_data.editor!.session.getMode().$id.replace('ace/mode/', '');
 
         cx_data.editor!.on('changeSession', this.cachedBind(this.onSessionChange));
     }
@@ -95,6 +100,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
     async onLoadEditor() {
         if (cx_data.settings.lsp) {
             await this.setupLSP();
+            this.filePath = getCurrentFile();
         }
     }
 
@@ -109,8 +115,10 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
                 cx_data.lsp = undefined;
             }
 
-            if (cx_data.editor && cx_data.settings.lsp)
+            if (cx_data.editor && cx_data.settings.lsp) {
                 await this.setupLSP();
+                this.filePath = getCurrentFile();
+            }
         }
     }
 
@@ -124,10 +132,33 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
     }
 
 
-    onSessionChange({ oldSession, session } : { oldSession : AceAjax.IEditSession , session: AceAjax.IEditSession }) {
+    async onSessionChange({ oldSession, session } : { oldSession : AceAjax.IEditSession , session: AceAjax.IEditSession }) {
+
         // cx_data.lsp?.closeDocument(oldSession);
         // @ts-ignore
-        this.fileName = session.id + '.' + session.getMode().$id.replace('ace/mode/', '');
+        this.aceFileName = session.id + '.' + session.getMode().$id.replace('ace/mode/', '');
+
+        if (this.filePath) {
+            // const parts = this.filePath.split('/');
+            // let file : FileNode | undefined = this.root;
+            // for (const part of parts) {
+            //     file = this.root.children.find((child) => child.title == part);
+            // }
+
+            // const { content } = await new Promise<{ content: string } >((resolve, reject) =>
+            //     Meteor.connection.call("editor_getFileContent", {
+            //         "projectId": this.projectId,
+            //         "fileKey": file.key,
+            //     }, (error : Error, result : { content: string } ) => {
+            //         if (error) reject(error);
+            //         else resolve(result);
+            //     })
+            // );
+
+            sendMessage('lsp-file', { path: '/' + this.filePath, content: oldSession.getValue() });
+
+        }
+        this.filePath = getCurrentFile();
     }
 
     onAceMessage(message: LSP.RequestMessage) {
@@ -160,7 +191,7 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
 
         if (message.method === 'textDocument/publishDiagnostics') {
             // @ts-ignore
-            (message.params as PublishDiagnosticsParams).uri = this.fileName;
+            (message.params as PublishDiagnosticsParams).uri = this.aceFileName;
         }
 
         this.fakeWorker.onmessage?.({ data: message });

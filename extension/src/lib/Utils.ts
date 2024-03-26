@@ -104,7 +104,7 @@ export function getAntTreePath(el: Element) {
 }
 
 export function getCurrentFile() {
-    const el = document.querySelector('[data-test=project-tree-panel] .ant-tree-treenode-selected');
+    const el = document.querySelector('[data-test=project-tree-panel] .ant-tree-treenode-selected') ?? undefined;
     return el ? getAntTreePath(el) : el;
 }
 

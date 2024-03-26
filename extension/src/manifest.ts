@@ -22,6 +22,7 @@ const manifest = {
 };
 
 export function getManifestFirefox(): chrome.runtime.ManifestV2 {
+  console.info('Using firefox Manifest');
   /** @ts-ignore */
   return {
     manifest_version: 2,
@@ -48,6 +49,7 @@ export function getManifestFirefox(): chrome.runtime.ManifestV2 {
 
 
 export function getManifestChrome(): chrome.runtime.ManifestV3 {
+  console.info('Using chrome Manifest');
   /** @ts-ignore */
   return {
     manifest_version: 3,
