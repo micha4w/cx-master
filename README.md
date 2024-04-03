@@ -3,8 +3,6 @@ This extension adds cool stuff like a nice switch between Vim, VSCode and Ace ke
 
 <img alt='settings' src='res/settings.png' width='400'>
 
-// TODO make different manifest for firefox
-
 ## Extension
 All the web Extension code is currently inside the `extension/` directory.
 Code Expert uses `ace-builds` version 1.22.0 and `xterm` version `5.3.0` so when updating the package.json, make sure to keep these versions the same.
@@ -55,7 +53,7 @@ sudo apt-get install clangd-12
 ```
 More systems [here](https://clangd.llvm.org/installation.html)
 
-For the Python LSP (PyRight):
+For the Python LSP (PyRight) you need to have Python installed and then do:
 ```ps1
 pip install pyright
 # The libraries you want to use in CX need to be installed on your system
