@@ -48,6 +48,10 @@ async fn read_lsp_message<R: AsyncBufReadExt + std::marker::Unpin>(
         buf.read_line(&mut header).await?;
         // Command::new("notify-send").args([std::format!("{:?}", header)]).spawn()?;
 
+        if header == 0 {
+            return Err(std::io::Error::new(std::io::ErrorKind::BrokenPipe, "Stdout closed by LSP"));
+        }
+
         if header == "\r\n" {
             break;
         }
@@ -318,6 +322,7 @@ async fn ensure_version(version: String) -> anyhow::Result<()> {
             .ok_or(anyhow!("Failed to find the GitHub Release to update to"))
     }).await??;
 
+    println!("release: {:?}", release);
     let os_string = std::option_env!("CX_OS_STRING").ok_or(anyhow!(
         "Executable was built without the correct Environment Variables"
     ))?;
@@ -328,6 +333,7 @@ async fn ensure_version(version: String) -> anyhow::Result<()> {
         .find(|asset| asset.name.contains(os_string))
         .ok_or(anyhow!("Failed to find the correct Binary"))?
         .clone();
+    println!("asset: {:?}", asset);
 
     let tmp_dir = tempfile::Builder::new()
         .prefix("self_update")
@@ -363,6 +369,9 @@ async fn main() {
     panic::set_hook(Box::new(handle_panic));
 
     let result: anyhow::Result<()> = (async {
+        ensure_version("1.2.4".to_owned()).await?;
+        return Ok(());
+
         let start = read_browser_message(tokio::io::stdin()).await?;
         match start["type"].as_str() {
             Some("ensure-version") => {
