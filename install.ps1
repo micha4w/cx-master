@@ -21,7 +21,7 @@ $MANIFEST_FIREFOX = '{
   "description": "Bridge to connect Code Expert with local LSPs Servers",
   "path": ' + (ConvertTo-Json ($Env:APPDATA + "\cx-master\cx-lsp-controller.exe")) + ',
   "type": "stdio",
-  "allowed_extensions": ["cx-master@micha4w.ch"],
+  "allowed_extensions": ["cx-master@micha4w.ch"]
 }'
 
 Write-Host "Downloading Executable..."
