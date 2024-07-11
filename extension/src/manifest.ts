@@ -36,7 +36,6 @@ export function getManifestFirefox(): chrome.runtime.ManifestV2 {
     browser_specific_settings: {
       gecko: {
         id: pkg.name + '@micha4w.ch',
-        strict_min_version: "57.0",
       }
     },
     permissions: [
