@@ -63,9 +63,22 @@ onMessage('init', (settings, root) => appendTask(async () => {
         return true;
     });
 
-    const key = Object.keys(cx_data.containers.lower_panel).find(key => key.startsWith('__reactFiber$'));
-    if (key)
-        cx_data.terminal = (cx_data.containers.lower_panel as any)[key].child.updateQueue.lastEffect.deps[0];
+    const terminal_key = Object.keys(cx_data.containers.lower_panel).find(key => key.startsWith('__reactFiber$'));
+    if (terminal_key)
+        cx_data.terminal = (cx_data.containers.lower_panel as any)[terminal_key].child.updateQueue.lastEffect.deps[0];
+
+    await waitForElm(() => {
+        const io_holder = document.querySelector('[data-test="ide-info-panel"]')?.lastChild;
+        if (io_holder) {
+            const io_key = Object.keys(io_holder).find(key => key.startsWith('__reactFiber$'));
+            if (io_key)
+                cx_data.io = (io_holder as any)[io_key].return.updateQueue.lastEffect.deps[0];
+
+            return true;
+        }
+
+        return false
+    });
 
     handlers = [
         new ShortcutsHandler(),

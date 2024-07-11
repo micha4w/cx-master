@@ -1,4 +1,5 @@
 import type { LanguageProvider } from 'ace-linters/types/language-provider';
+import type { Socket } from 'socket.io-client';
 import type { Terminal } from 'xterm';
 
 // @ts-ignore
@@ -16,6 +17,7 @@ export var cx_data: {
     };
     editor?: AceAjax.Editor;
     terminal?: Terminal;
+    io?: Socket;
     lsp?: LanguageProvider;
 } = {};
 
