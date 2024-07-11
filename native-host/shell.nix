@@ -1,7 +1,9 @@
 { pkgs ? import <nixpkgs> {} }: pkgs.mkShell {
   packages = with pkgs; [
-    nodejs
-    nodePackages.npm
-    chromium
+    openssl
+    openssl.dev
+    cargo
+    rustup
+    pkg-config
   ];
 }

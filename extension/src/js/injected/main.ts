@@ -31,31 +31,37 @@ onMessage('init', (settings, root) => appendTask(async () => {
     cx_data.settings = settings;
     cx_data.root = root;
 
-    if (!document.querySelector('svg[data-test-id=project-info]')) {
-        const meteorSocket: WebSocket = Meteor?.connection?._stream?.socket;
-        await new Promise<void>(res => {
-            meteorSocket?.addEventListener('message', (event) => {
-                if (JSON.parse(event.data)?.result?.environment) {
-                    res();
-                }
-            });
-        });
-    }
+    await waitForElm(() => {
+        const container = document.querySelector("#cx-ide .split-view-container")?.children;
+        const left_tabs = container?.[0];
+        const left_panel = container?.[1];
+        const right_panel = container?.[3];
+        const right_tabs = container?.[4];
 
-    const container = document.querySelector("#cx-ide .split-view-container")!.children;
-    const main_container = container[2].querySelector(".split-view-container")!.children;
+        if (!left_tabs || !left_panel || !right_panel || !right_tabs)
+            return false;
+
+        const main_container = container?.[2].querySelector(".split-view-container")?.children;
+
+        const editor_surface = main_container?.[0];
+        const lower_panel = main_container?.[1];
+        const lower_tabs = main_container?.[2];
+
+        if (!editor_surface || !lower_panel || !lower_tabs)
+            return false;
+
     cx_data.containers = {
-        left_tabs: container[0],
-        left_panel: container[1],
-
-        editor_surface: main_container[0],
-
-        lower_panel: main_container[1],
-        lower_tabs: main_container[2],
-
-        right_panel: container[3],
-        right_tabs: container[4],
+            left_tabs,
+            left_panel,
+            editor_surface,
+            lower_panel,
+            lower_tabs,
+            right_panel,
+            right_tabs,
     }
+
+        return true;
+    });
 
     const key = Object.keys(cx_data.containers.lower_panel).find(key => key.startsWith('__reactFiber$'));
     if (key)
