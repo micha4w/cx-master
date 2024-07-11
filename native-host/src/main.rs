@@ -45,11 +45,11 @@ async fn read_lsp_message<R: AsyncBufReadExt + std::marker::Unpin>(
     let mut length = None;
     loop {
         let mut header = String::new();
-        buf.read_line(&mut header).await?;
+        let count = buf.read_line(&mut header).await?;
         // Command::new("notify-send").args([std::format!("{:?}", header)]).spawn()?;
 
-        if header == 0 {
-            return Err(std::io::Error::new(std::io::ErrorKind::BrokenPipe, "Stdout closed by LSP"));
+        if count == 0 {
+            return Err(anyhow!("Stdout closed by LSP"));
         }
 
         if header == "\r\n" {
@@ -369,9 +369,6 @@ async fn main() {
     panic::set_hook(Box::new(handle_panic));
 
     let result: anyhow::Result<()> = (async {
-        ensure_version("1.2.4".to_owned()).await?;
-        return Ok(());
-
         let start = read_browser_message(tokio::io::stdin()).await?;
         match start["type"].as_str() {
             Some("ensure-version") => {
