@@ -2,7 +2,10 @@ import { ShortcutsHandler } from './handlers/shortcuts';
 import { OptionsHandler } from './handlers/options';
 import { KeybindsHandler } from './handlers/keybinds';
 import { LSPHandler } from './handlers/lsp';
-import { onMessage, sendMessage, cx_data } from '~/lib/Utils';
+import { onMessage, sendMessage, cx_data, waitForElm } from '~/lib/Utils';
+
+
+if (CX_DEBUG) console.log('CX: Running injected script');
 
 let handlers: ISettingsHandler[] = [];
 
@@ -28,6 +31,8 @@ async function appendTask(task: () => Promise<void>) {
 }
 
 onMessage('init', (settings, root) => appendTask(async () => {
+    if (CX_DEBUG) console.log('CX: Initializing injected Script');
+
     cx_data.settings = settings;
     cx_data.root = root;
 
@@ -50,7 +55,7 @@ onMessage('init', (settings, root) => appendTask(async () => {
         if (!editor_surface || !lower_panel || !lower_tabs)
             return false;
 
-    cx_data.containers = {
+        cx_data.containers = {
             left_tabs,
             left_panel,
             editor_surface,
@@ -58,7 +63,7 @@ onMessage('init', (settings, root) => appendTask(async () => {
             lower_tabs,
             right_panel,
             right_tabs,
-    }
+        }
 
         return true;
     });
@@ -91,8 +96,14 @@ onMessage('init', (settings, root) => appendTask(async () => {
         await handler.onLoad?.();
     }
 
-    if (document.querySelector('#ace-editor')) editorLoaded();
-    document.addEventListener("cxAceMounted", editorLoaded, { capture: true });
+    if (document.querySelector('#ace-editor')) {
+        if (CX_DEBUG) console.log('CX: Editor already loaded')
+        editorLoaded();
+    }
+    else {
+        if (CX_DEBUG) console.log('CX: Editor not loaded yet')
+    }
+    document.addEventListener('cxAceMounted', editorLoaded, { capture: true });
 
     if (CX_DEBUG) console.log('CX: Successfully injected script');
 }));

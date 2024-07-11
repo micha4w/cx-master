@@ -5,13 +5,8 @@ import { applyDefaultSettings } from "~/lib/Settings";
 import { onMessage, sendMessage } from "~/lib/Utils";
 const injectURL = browser.runtime.getURL(inject);
 
-// window.addEventListener('cx-master', (event: MessageEvent) => {
-// const x = {};
-// for (const y in event) {
-//     x[y] = event[y];
-// }
-//     browser.runtime.sendMessage(JSON.stringify(event.data));
-// });
+if (CX_DEBUG) console.log('CX: Running content script');
+
 (async function () {
     const scriptReady = new Promise<void>(res => onMessage('ready', res, true));
 
