@@ -33,6 +33,8 @@
   "dependencies": {
     "ace-builds": "^1.22.0",
     "ace-linters": "https://gitpkg.now.sh/micha4w/ace-linters/packages/ace-linters?main",
+    "socket.io-client": "^4.7.5",
+    "socket.io-msgpack-parser": "^3.0.2",
     "svelte": "^4.2.12",
     "vite-plugin-web-extension": "^4.1.2",
     "webextension-polyfill": "^0.10.0",
