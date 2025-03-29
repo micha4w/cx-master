@@ -27,6 +27,10 @@ if (CX_DEBUG) console.log('CX: Running content script');
         background.onMessage.addListener(message => {
             sendMessage('lsp-' + message.type as any, message.data);
         });
+        background.onDisconnect.addListener(() => {
+            sendMessage('lsp-stop');
+            background = undefined;
+        });
         background.postMessage({ type: 'start', id })
     });
     onMessage('lsp-stop', () => {

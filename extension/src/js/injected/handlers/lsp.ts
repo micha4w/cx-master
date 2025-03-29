@@ -80,7 +80,15 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
     }
 
     async onLoad() {
-        onMessage('lsp-response', this.cachedBind(this.onLSPMessage));
+        onMessage('lsp-response', this.onLSPMessage.bind(this));
+        onMessage('lsp-stop', () => {
+            if (CX_DEBUG) console.log('CX: LSP Errored, trying to restart')
+
+            this.onUnload();
+
+            if (cx_data.editor)
+                this.onLoadEditor();
+        });
         onMessage('lsp-error', (message) => { throw new Error(message); });
 
         this.fakeWorker = {
@@ -99,19 +107,10 @@ export class LSPHandler extends CachedBind implements ISettingsHandler {
 
     async onUpdate(oldSettings: Settings) {
         if (cx_data.settings.lsp?.id !== oldSettings.lsp?.id) {
-            if (cx_data.lsp) {
-                sendMessage('lsp-stop');
-                if (cx_data.editor) {
-                    cx_data.editor.off('changeSession', this.cachedBind(this.onSessionChange));
-                }
-                cx_data.lsp.dispose()
-                cx_data.lsp = undefined;
-            }
+            this.onUnload();
 
-            if (cx_data.editor && cx_data.settings.lsp) {
-                await this.setupLSP();
-                this.filePath = getCurrentFile();
-            }
+            if (cx_data.editor)
+                this.onLoadEditor();
         }
     }
 

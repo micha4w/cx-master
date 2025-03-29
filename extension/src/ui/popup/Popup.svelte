@@ -86,7 +86,6 @@
                     {error}
                 </details>
             </div>
-            <!-- TODO give hint about installing -->
         {/await}
     </div>
 

@@ -84,7 +84,7 @@ browser.runtime.onConnect.addListener(async (content) => {
             console.error(native.error);
         }
             
-        content.disconnect();
         if (CX_DEBUG) console.log("Connection closed by LSP");
+        content.disconnect();
     });
 });

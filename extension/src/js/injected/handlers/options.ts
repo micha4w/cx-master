@@ -5,9 +5,9 @@ import { ShortcutsHandler } from './shortcuts';
 
 export class OptionsHandler extends CachedBind implements ISettingsHandler {
     documentObserver = new MutationObserver(this.handleDOMMutation.bind(this));
-    linkProviderDisposer!: IDisposable;
+    linkProviderDisposer!: IDisposable[];
 
-    gotoAfterOpened!: [number, number];
+    gotoAfterOpened!: [number, number?];
     doneParsingCompilerOutput = false;
     compilerAnnotations = new Map<string, AceAjax.Annotation[]>();
     annotatedFiles = new Set<string>();
@@ -84,26 +84,55 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
             if (cx_data.terminal) {
                 handleOptionChange(
                     ['goto_file'],
-                    () => this.linkProviderDisposer = cx_data.terminal!.registerLinkProvider(new LinkProvider(
-                        cx_data.terminal!,
-                        /(\/var\/lib\/cxrun\/projectfiles\/.*?:(?:\d+:){0,2})/,
-                        this.handleFileLinkClicked.bind(this),
-                    )),
-                    () => this.linkProviderDisposer.dispose(),
+                    () => this.linkProviderDisposer = [
+                        cx_data.terminal!.registerLinkProvider(new LinkProvider(
+                            cx_data.terminal!,
+                            /File (\"\/var\/lib\/cxrun\/projectfiles\/[\w\d\.\- ]*\", line \d+)/,
+                            (_, text) => {
+                                let [__, file, line] = text.split('"');
+                                file = file.substring('/var/lib/cxrun/projectfiles/'.length);
+                                line = line.substring(', line '.length);
+
+                                this.gotoFile(file, +line, undefined);
+                            }
+                        )),
+                        cx_data.terminal!.registerLinkProvider(new LinkProvider(
+                            cx_data.terminal!,
+                            /(\/var\/lib\/cxrun\/projectfiles\/[\w\d\.\- ]*(:\d+(:\d+)?)?)/,
+                            (_, text) => {
+                                const [file, line, column] = text.substring('/var/lib/cxrun/projectfiles/'.length).split(':');
+
+                                this.gotoFile(file, +line, column ? +column : undefined);
+                            }
+                        ))
+                    ],
+                    () => this.linkProviderDisposer.forEach((dis) => dis.dispose()),
                 );
 
-                const meteorSocket: WebSocket = Meteor?.connection?._stream?.socket;
-                handleOptionChange(
-                    ['parse_errors'],
-                    () => meteorSocket?.addEventListener('message', this.cachedBind(this.handleMeteorResponse)),
-                    () => {
-                        meteorSocket?.removeEventListener('message', this.cachedBind(this.handleMeteorResponse));
-                        this.compilerAnnotations.clear();
-                        cx_data.editor?.session.clearAnnotations();
-                        const file = getCurrentFile();
-                        if (file) this.annotatedFiles.delete(file);
-                    }
-                );
+                if (cx_data.io) {
+                    const orig_emitWithAck = cx_data.io?.emitWithAck;
+                    const my_emitWithAck = (ev: any, ...args: any[]) => {
+                        const resp = orig_emitWithAck.call(cx_data.io, ev, ...args);
+                        resp.then((data) => {
+                            this.handleSocketIOAck(ev, args, data);
+                        });
+                        return resp;
+                    };
+
+                    handleOptionChange(
+                        ['parse_errors'],
+                        () => cx_data.io!.emitWithAck = my_emitWithAck,
+                        () => {
+                            cx_data.io!.emitWithAck = orig_emitWithAck
+
+                            this.compilerAnnotations.clear();
+                            cx_data.editor?.session.clearAnnotations();
+
+                            const file = getCurrentFile();
+                            if (file) this.annotatedFiles.delete(file);
+                        }
+                    );
+                }
             }
         }
 
@@ -173,15 +202,11 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
         }
     }
 
-    handleMeteorResponse(e: MessageEvent) {
-        const data = JSON.parse(e.data);
-        if (data?.result?.stdout) {
-            const stdout = (data.result.stdout as string).replaceAll(/\u001b\[.*?[a-zA-Z]/g, '');
-            if (stdout === '<cx:end/>') {
-                this.doneParsingCompilerOutput = true;
-                return;
-            }
 
+    handleSocketIOAck(ev: any, args: any[], resp: any) {
+        if (CX_DEBUG) console.log('handleSocketIOAck: got response', ev, args, resp);
+
+        if (ev === 'invoke' && args[0] === 'stream_read' && resp.right) {
             if (this.doneParsingCompilerOutput) {
                 // New compile output
                 this.doneParsingCompilerOutput = false;
@@ -189,17 +214,22 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
                 this.compilerAnnotations.clear();
             }
 
+            let stdout = resp.right as string;
+            stdout = stdout.replaceAll(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '');
+
+            if (CX_DEBUG) console.log('handleSocketIOAck: cleaned up stdout', stdout);
+
             const matches = stdout.matchAll(/^\/var\/lib\/cxrun\/projectfiles\/(.*?):(\d+):(\d*):?\s+(?:fatal\s+)?(warning|error):\s+(.*)$/gm);
             while (true) {
                 let { done, value: match } = matches.next();
                 if (done) break;
 
-                this.compilerAnnotations.set(match[1],
-                    (this.compilerAnnotations.get(match[1]) || []).concat([{
-                        text: match[5],
-                        row: match[2] - 1,
-                        column: match[3] - 1,
-                        type: match[4],
+                this.compilerAnnotations.set(match![1],
+                    (this.compilerAnnotations.get(match![1]) || []).concat([{
+                        text: match![5],
+                        row: match![2] - 1,
+                        column: match![3] - 1,
+                        type: match![4],
                     }])
                 );
                 const file = getCurrentFile();
@@ -208,6 +238,12 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
                     this.annotatedFiles.add(file);
                 }
             }
+
+            if (stdout.endsWith('<cx:end/>')) {
+                this.doneParsingCompilerOutput = true;
+                return;
+            }
+
         }
     }
 
@@ -243,15 +279,15 @@ export class OptionsHandler extends CachedBind implements ISettingsHandler {
         document.querySelector('.ant-tree-node-focused')?.classList.remove('ant-tree-node-focused');
     }
 
-    handleFileLinkClicked(e: MouseEvent, text: string) {
-        const [file, line, column] = text.substring('/var/lib/cxrun/projectfiles/'.length).split(':');
+    gotoFile(file: string, line?: number, column?: number) {
+        if (column) column -= 1;
 
         if (getCurrentFile() !== file) {
             openFile(file);
-            if (line) this.gotoAfterOpened = [+line, +column - 1];
+            if (line) this.gotoAfterOpened = [line, column];
         } else {
             ShortcutsHandler.focusEditor();
-            if (line) cx_data.editor!.gotoLine(+line, +column - 1);
+            if (line) cx_data.editor!.gotoLine(line, column);
         }
     }
 

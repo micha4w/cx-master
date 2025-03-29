@@ -203,10 +203,7 @@ async fn run_lsp(entry: &String) -> anyhow::Result<()> {
         );
         loop {
             let message = read_lsp_message(&mut stdout).await?;
-            let ret = handle_lsp_message(message).await;
-            if ret.is_err() {
-                return ret;
-            }
+            handle_lsp_message(message).await?;
         }
     });
 

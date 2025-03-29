@@ -30,10 +30,6 @@ export class KeybindsHandler implements ISettingsHandler {
                         cx_data.editor
                     );
                 });
-                // vim.Vim.defineEx('gmap','gm', (cm, params) => {
-                // if (shortcutRunners[params.args[1]])
-                //     maps.push([params.args[0], params.args[1]]);
-                // });
                 for (const line of cx_data.settings.vimrc.split('\n')) {
                     if (line.trim() !== '')
                         vim.Vim.handleEx((cx_data.editor as any).state.cm, line);

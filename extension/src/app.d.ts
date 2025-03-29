@@ -1,9 +1,6 @@
 import type { KeyboardModifiers } from "./lib/KeyboardModifiers";
 
 declare global {
-	var Meteor : any;
-
-	
 	interface Option {
 		index: number,
 		description: string;

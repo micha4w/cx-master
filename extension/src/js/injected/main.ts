@@ -33,6 +33,7 @@ async function appendTask(task: () => Promise<void>) {
 onMessage('init', (settings, root) => appendTask(async () => {
     if (CX_DEBUG) console.log('CX: Initializing injected Script');
 
+    (window as any).cx_data = cx_data;
     cx_data.settings = settings;
     cx_data.root = root;
 
@@ -65,6 +66,7 @@ onMessage('init', (settings, root) => appendTask(async () => {
             right_tabs,
         }
 
+        if (CX_DEBUG) console.log('CX: Panels and stuff loaded');
         return true;
     });
 
@@ -76,8 +78,12 @@ onMessage('init', (settings, root) => appendTask(async () => {
         const io_holder = document.querySelector('[data-test="ide-info-panel"]')?.lastChild;
         if (io_holder) {
             const io_key = Object.keys(io_holder).find(key => key.startsWith('__reactFiber$'));
-            if (io_key)
+            if (io_key) {
                 cx_data.io = (io_holder as any)[io_key].return.updateQueue.lastEffect.deps[0];
+                if (CX_DEBUG) console.log('CX: SocketIO loaded');
+            } else {
+                if (CX_DEBUG) console.log('CX: SocketIO not found');
+            }
 
             return true;
         }
@@ -119,6 +125,8 @@ onMessage('settings', (settings) => appendTask(async () => {
 
 onMessage('unload', () => appendTask(async () => {
     document.removeEventListener("cxAceMounted", editorLoaded, { capture: true });
+
+    delete (window as any).cx_data;
 
     for (const handler of handlers) {
         await handler.onUnload?.();

@@ -137,18 +137,20 @@ export function applyDefaultSettings(settings : Settings) : Settings {
     if (!settings)
         return defaultSettings;
 
-    for (const setting in defaultSettings) {
-        if (!settings[setting]) {
-            settings[setting] = defaultSettings[setting];
+    const _settings = settings as Record<string, any>;
+    const _defaultSettings = defaultSettings as Record<string, any>;
+    for (const setting in _defaultSettings) {
+        if (!_settings[setting]) {
+            _settings[setting] = _defaultSettings[setting];
         } else {
-            if (typeof defaultSettings[setting] === 'object') {
-                for (const id in defaultSettings[setting]) {
-                    if (!settings[setting][id])
-                        settings[setting][id] = defaultSettings[setting][id];
+            if (typeof _defaultSettings[setting] === 'object') {
+                for (const id in _defaultSettings[setting]) {
+                    if (!_settings[setting][id])
+                        _settings[setting][id] = _defaultSettings[setting][id];
                     else {
-                        for (const key in defaultSettings[setting][id]) {
+                        for (const key in _defaultSettings[setting][id]) {
                             if (key !== 'value' && key !== 'modifiers') {
-                                settings[setting][id][key] = defaultSettings[setting][id][key];
+                                _settings[setting][id][key] = _defaultSettings[setting][id][key];
                             }
                         }
                     }
